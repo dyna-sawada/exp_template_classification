@@ -1,0 +1,343 @@
+
+
+import argparse
+import pandas as pd
+import numpy as np
+import json
+import glob
+
+from tqdm import tqdm
+
+import torch
+import torch.nn as nn
+from torch.utils import data
+from torch.utils.data import TensorDataset, random_split
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data.dataset import Subset
+import torch.nn.functional as F
+
+from sklearn.model_selection import KFold
+from sklearn.metrics import recall_score, precision_score, f1_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import coverage_error
+
+from transformers import AutoTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup
+
+#from data import TemplateIdsDataset
+from model import TorchTemplateClassifier
+
+
+
+
+class FocalLoss():
+    def __init__(self, gamma=2, alpha=0.25):
+        self._gamma = gamma
+        self._alpha = alpha
+
+    def forward(self, y_pred, y_true):
+        cross_entropy_loss_fn = torch.nn.BCELoss()
+        cross_entropy_loss = cross_entropy_loss_fn(y_pred, y_true)
+        p_t = ((y_true * y_pred) +
+               ((1 - y_true) * (1 - y_pred)))
+        modulating_factor = 1.0
+        if self._gamma:
+            modulating_factor = torch.pow(1.0 - p_t, self._gamma)
+        alpha_weight_factor = 1.0
+        if self._alpha is not None:
+            alpha_weight_factor = (y_true * self._alpha +
+                                   (1 - y_true) * (1 - self._alpha))
+        focal_cross_entropy_loss = (modulating_factor * alpha_weight_factor *
+                                    cross_entropy_loss)
+        return focal_cross_entropy_loss.mean()
+
+
+class FocalLoss_(nn.Module):
+    def __init__(self, gamma=2):
+        super(FocalLoss_, self).__init__()
+        self.gamma = gamma
+
+    def forward(self, input, target):
+        target = target.float()
+
+        # BCELossWithLogits
+        max_val = (-input).clamp(min=0)
+        loss = input - input * target + max_val + \
+               ((-max_val).exp() + (-input - max_val).exp()).log()
+
+        invprobs = F.logsigmoid(-input * (target * 2.0 - 1.0))
+        loss = (invprobs * self.gamma).exp() * loss
+        if len(loss.size()) == 2:
+            loss = loss.sum(dim=1)
+        return loss.mean()
+
+
+target = torch.tensor(
+        [[1, 0, 0, 1, 1, 0],
+        [0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0, 0,],
+        [0, 0, 0, 0, 0, 1]]
+        )
+target = target.to(torch.float)
+
+sample = torch.tensor(
+        [[0.5068503,  0.4909574,  0.48088843, 0.56281924, 0.5019796,  0.55661233],
+         [0.5004162,  0.5388744,  0.5154122, 0.6002497,  0.5186469,  0.52400404],
+         [0.5173367,  0.53379077, 0.48255765, 0.57839257, 0.49632147, 0.5143831 ],
+         [0.5200508,  0.540166,   0.4624398, 0.5662759,  0.5013316,  0.55133134]]
+        )
+
+#loss = coverage_error(target, sample)
+#loss.backward()
+#print(loss)
+
+
+loss_fn = FocalLoss_()
+
+
+
+target = torch.ones([10, 64], dtype=torch.float32)  # 64 classes, batch size = 10
+output = torch.full([10, 64], 1.5)  # A prediction (logit)
+pos_weight = torch.ones([64])  # All weights are equal to 1
+criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+loss = criterion(output, target)  # -log(sigmoid(1.5))
+print(target.shape, output.shape)
+
+
+"""
+te_data = json.load(open('./work/temp_id_gold.json'))
+
+ref_ids = [1,2]
+MAX_SEQ_LEN = 512
+
+for lo_id, _text_label_dict in te_data.items():
+    pm_speech = te_data[lo_id]['pm_speech']
+    lo_speech = te_data[lo_id]['lo_speech']
+    for _fb_unit_id, temp_data_dict in _text_label_dict['temp_data'].items():
+        ref_id = temp_data_dict['ref_id']
+        label = temp_data_dict['temp_id']
+
+        print(ref_id)
+        print(label)
+
+
+
+# tokenizer setting
+sp_tokens = ['<PM>', '</PM>', '<LO>', '</LO>', '<FB>', '</FB>']
+tokenizer = AutoTokenizer.from_pretrained('roberta-base')
+tokenizer.add_tokens(sp_tokens, special_tokens=True)
+
+lo_texts = lo_speech.split('.')
+lo_speech = ''
+for i, lo_text in enumerate(lo_texts):
+    if i == len(lo_texts) - 1:
+        break
+
+    if i in ref_ids:
+        lo_text = ' <FB>' + lo_text + '. </FB>'
+    else:
+        lo_text = lo_text + '.'
+    print("{}\t{}\n".format(i, lo_text))
+    lo_speech += lo_text
+
+lo_speech = ' <LO> ' + lo_speech + ' </LO>'
+#print(lo_speech)
+
+
+pm_texts = pm_speech.split('.')
+
+i = 0
+tokens = ['t'] * 512
+while len(tokens) >= 510:
+    speeches = '<PM> ' + '.'.join(pm_texts[i:]) + ' </PM>' + lo_speech
+    tokens = tokenizer.tokenize(speeches)
+    i += 1
+
+print("iteration:{}\nn_tokens:{}\nspeeches:{}".format(i-1, len(tokens), speeches))
+
+speech_ids = tokenizer.encode_plus(
+                                speeches,
+                                add_special_tokens=True,
+                                max_length=MAX_SEQ_LEN,
+                                padding='max_length',
+                                return_attention_mask=True,
+                                return_tensors='pt'
+                                )
+print(speech_ids)
+print(speech_ids['input_ids'].size())
+"""
+
+
+"""
+y_val_true = np.array(
+        [[1, 0, 0, 1, 1, 0],
+        [0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0, 0,],
+        [0, 0, 0, 0, 0, 1]]
+        )
+
+sample = np.array(
+        [[0.5068503,  0.4909574,  0.48088843, 0.56281924, 0.5019796,  0.55661233],
+         [0.5004162,  0.5388744,  0.5154122, 0.6002497,  0.5186469,  0.52400404],
+         [0.5173367,  0.53379077, 0.48255765, 0.57839257, 0.49632147, 0.5143831 ],
+         [0.5200508,  0.540166,   0.4624398, 0.5662759,  0.5013316,  0.55133134]]
+        )
+
+#print(sample)
+y_val_pred = np.where(sample >= 0.5, 1, 0)
+#print(y_val_pred)
+
+
+micro_f1 = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='micro')
+macro_f1 = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='macro')
+
+print("MicroF1:{:.3f}\tMacroF1:{:.3f}".format(
+                                    micro_f1, macro_f1
+                                    )
+    )
+
+"""
+
+
+"""
+model_dir = './out_test/iter_0/*.json'
+training_loss_files = glob.glob(model_dir)
+print(sorted(training_loss_files))
+
+valid_losses = []
+for t_l_f in sorted(training_loss_files):
+    t_l = json.load(open(t_l_f))
+    valid_loss = t_l['val_losses']
+    valid_losses.append(valid_loss[0])
+    print(valid_loss)
+
+best_fold_i = valid_losses.index(min(valid_losses))
+print(best_fold_i)
+print('best_model_fold_{}.pt'.format(best_fold_i))
+"""
+
+
+"""
+def fit(
+    xy_train: torch.utils.data.dataset.TensorDataset,
+    xy_val: torch.utils.data.dataset.TensorDataset):
+    print(xy_train)
+    print(xy_val)
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-enc', '--encoder', default='bert-base',
+    help='Encoder'
+)
+args = parser.parse_args()
+
+data_dir = './work/temp_id_gold.json'
+data_dict = json.load(open(data_dir))
+
+MAX_TOKEN_LEN = 512
+batch_size = 2
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+
+data_set = TemplateIdsDataset(
+            data_dict,
+            tokenizer,
+            MAX_TOKEN_LEN
+        )
+
+
+
+m = TorchTemplateClassifier(args)
+loss_fn = nn.BCELoss()
+
+
+_, _, input_ids, attention_masks, labels = data_set.preprocess_dataset()
+dataset = data_set.make_tensor_dataset()
+#print(dataset)
+
+
+
+for i in range(5):
+    train_size = int(0.8 * len(dataset))
+    test_size = len(dataset) - train_size
+    train_valid_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+    
+    #print(train_dataset)
+    t_x = [train_valid_dataset[i][0] for i, _ in enumerate(train_valid_dataset)]
+    #print(len(t_x))
+    
+    kf = KFold(n_splits=5)
+    for _fold, (train_index, valid_index) in enumerate(kf.split(t_x)):
+        #print(train_index)
+        #print(valid_index)
+
+        train_dataset = Subset(train_valid_dataset, train_index)
+        train_dataloader = DataLoader(train_dataset, batch_size, shuffle=True)
+        valid_dataset   = Subset(train_valid_dataset, valid_index)
+        valid_dataloader = DataLoader(valid_dataset, batch_size, shuffle=False)
+
+        #fit(train_dataset, valid_dataset)
+        #fit(train_dataloader, valid_dataloader)
+        print(len(valid_index))
+        count = 0
+        for batch in valid_dataloader:
+            #print(batch)
+            id, attention, y_true = (d for d in batch)
+            y_pred = m(id, attention)
+            
+            loss = loss_fn(y_pred, y_true)
+            print("count:{}\tloss:{}".format(count, loss))
+            count += 1
+            
+        break
+    break
+
+
+"""
+
+"""
+
+# データセットクラスの作成
+dataset = TensorDataset(input_ids, attention_masks, labels)
+
+# 90%地点のIDを取得
+train_size = int(0.9 * len(dataset))
+val_size = len(dataset) - train_size
+
+# データセットを分割
+train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+print('訓練データ数：{}'.format(train_size))
+print('検証データ数:　{} '.format(val_size))
+
+
+# 90%地点のIDを取得
+train_size = int(0.9 * len(dataset))
+val_size = len(dataset) - train_size
+
+# データセットを分割
+train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+print('訓練データ数：{}'.format(train_size))
+print('検証データ数:　{} '.format(val_size))
+
+
+# データローダーの作成
+batch_size = 16
+
+# 訓練データローダー
+train_dataloader = DataLoader(
+            train_dataset,  
+            sampler = RandomSampler(train_dataset), # ランダムにデータを取得してバッチ化
+            batch_size = batch_size
+        )
+
+# 検証データローダー
+validation_dataloader = DataLoader(
+            val_dataset, 
+            sampler = SequentialSampler(val_dataset), # 順番にデータを取得してバッチ化
+            batch_size = batch_size
+        )
+
+"""
