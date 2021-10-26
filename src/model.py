@@ -118,8 +118,8 @@ class TemplateClassifier():
         self.tok.add_tokens(sp_tokens, special_tokens=True)
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
 
-        #self.loss_fn = FocalLoss(gamma=2, alpha=None)
-        self.loss_fn = nn.BCELoss()
+        self.loss_fn = FocalLoss(gamma=2, alpha=None)
+        #self.loss_fn = nn.BCELoss()
 
     
     @staticmethod
