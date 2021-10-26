@@ -11,6 +11,7 @@ import numpy as np
 
 from sklearn.metrics import recall_score, precision_score, f1_score
 from sklearn.metrics import classification_report
+from sklearn.metrics import coverage_error
 
 import torch
 import torch.nn as nn
@@ -29,7 +30,7 @@ class FocalLoss(nn.Module):
         self._alpha = alpha
 
     def forward(self, y_pred, y_true):
-        cross_entropy_loss_fn = nn.BCEWithLogitsLoss()
+        cross_entropy_loss_fn = nn.BCELoss()
         cross_entropy_loss = cross_entropy_loss_fn(y_pred, y_true)
         p_t = ((y_true * y_pred) +
                ((1 - y_true) * (1 - y_pred)))
@@ -79,7 +80,7 @@ class TorchTemplateClassifier(nn.Module):
         self.fc1 = nn.Linear(self.hDim, self.hDim)
         self.fc2 = nn.Linear(self.hDim, 25)
         self.relu = nn.ReLU()
-        #self.sig = nn.Sigmoid()
+        self.sig = nn.Sigmoid()
 
 
 
@@ -93,7 +94,7 @@ class TorchTemplateClassifier(nn.Module):
         out = self.relu(out)
         out = self.fc2(out)
 
-        return out
+        return self.sig(out)
 
 
 
@@ -118,7 +119,7 @@ class TemplateClassifier():
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
 
         #self.loss_fn = FocalLoss(gamma=2, alpha=None)
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.BCELoss()
 
     
     @staticmethod
@@ -174,7 +175,7 @@ class TemplateClassifier():
 
         best_val_mse, best_model = 9999, None
         train_losses, val_losses = [], []
-        micro_f1s, macro_f1s = [], []
+        micro_f1s, macro_f1s, coverages = [], [], []
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -193,6 +194,8 @@ class TemplateClassifier():
 
             logging.info("Loss Train: {:.3f} Valid: {:.3f}".format(train_loss, val_loss))
 
+            coverage = coverage_error(y_val_true, y_val_pred)
+            coverages.append(coverage)
 
             y_val_pred = np.where(y_val_pred >= 0.5, 1, 0)
             micro_f1 = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='micro', zero_division=0)
@@ -201,7 +204,11 @@ class TemplateClassifier():
             micro_f1s.append(micro_f1)
             macro_f1s.append(macro_f1)
 
-            logging.info("Micro-F1. Valid: {:.3f} Macro-F1. Valid: {:.3f}".format(micro_f1, macro_f1))
+            logging.info(
+                "Micro-F1. Valid: {:.3f}\tMacro-F1. Valid: {:.3f}\tCoverage Loss. Valid: {:.3f}".format(
+                    micro_f1, macro_f1, coverage
+                    )
+                )
 
 
             if best_val_mse > val_loss:
@@ -221,7 +228,8 @@ class TemplateClassifier():
                     "train_losses": train_losses,
                     "val_losses": val_losses,
                     "micro_f1": micro_f1s,
-                    "macro_f1": macro_f1s
+                    "macro_f1": macro_f1s,
+                    "coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
 
@@ -272,16 +280,23 @@ class TemplateClassifier():
 
         y_preds, y_trues = np.array(y_preds), np.array(y_trues)
 
-        logging.info("Prediction sample: {}".format(y_preds))
-        logging.info("Target sample: {}".format(y_trues.astype(np.int)))
+        logging.info("Prediction sample:\n{}".format(y_preds))
+        logging.info("Target sample:\n{}".format(y_trues.astype(np.int)))
         
+        
+        coverage = coverage_error(y_trues, y_preds)
+
         y_preds = np.where(y_preds >= 0.5, 1, 0)
 
 
         #logging.info("Acc. Train: {}".format(accuracy_score(y_trues, y_preds)))
         micro_f1_train = f1_score(y_pred=y_preds, y_true=y_trues, average='micro', zero_division=0)
         macro_f1_train = f1_score(y_pred=y_preds, y_true=y_trues, average='macro', zero_division=0)
-        logging.info("Micro-F1. Train: {:.3f} Macro-F1. Train: {:.3f}".format(micro_f1_train, macro_f1_train))
+        logging.info(
+            "Micro-F1. Train: {:.3f}\tMacro-F1. Train: {:.3f}\tCoverage Loss. Train: {:.3f}".format(
+                micro_f1_train, macro_f1_train, coverage
+                )
+            )
 
         return np.mean(running_loss)
 
@@ -314,6 +329,8 @@ class TemplateClassifier():
         with torch.no_grad():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
+        coverage = coverage_error(y_trues, y_preds)
+
         y_preds = np.where(y_preds >= 0.5, 1, 0)
         micro_f1 = f1_score(y_pred=y_preds, y_true=y_trues, average='micro', zero_division=0)
         macro_f1 = f1_score(y_pred=y_preds, y_true=y_trues, average='macro', zero_division=0)
@@ -323,7 +340,8 @@ class TemplateClassifier():
             "gold": y_trues.tolist(),
             "BCELoss": test_loss,
             "micro_f1": micro_f1,
-            "macro_f1": macro_f1
+            "macro_f1": macro_f1,
+            "coverage_error": coverage
         }
 
         print(result_log)

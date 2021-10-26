@@ -71,29 +71,28 @@ class FocalLoss_(nn.Module):
         return loss.mean()
 
 
-target = torch.tensor(
+target = np.array(
         [[1, 0, 0, 1, 1, 0],
         [0, 0, 0, 0, 1, 0],
         [1, 0, 0, 1, 0, 0,],
         [0, 0, 0, 0, 0, 1]]
         )
-target = target.to(torch.float)
+#target = target.to(torch.float)
 
-sample = torch.tensor(
+sample = np.array(
         [[0.5068503,  0.4909574,  0.48088843, 0.56281924, 0.5019796,  0.55661233],
          [0.5004162,  0.5388744,  0.5154122, 0.6002497,  0.5186469,  0.52400404],
          [0.5173367,  0.53379077, 0.48255765, 0.57839257, 0.49632147, 0.5143831 ],
          [0.5200508,  0.540166,   0.4624398, 0.5662759,  0.5013316,  0.55133134]]
         )
 
-#loss = coverage_error(target, sample)
-#loss.backward()
-#print(loss)
+loss = coverage_error(target, sample)
+print(loss)
 
 
+
+"""
 loss_fn = FocalLoss_()
-
-
 
 target = torch.ones([10, 64], dtype=torch.float32)  # 64 classes, batch size = 10
 output = torch.full([10, 64], 1.5)  # A prediction (logit)
@@ -103,7 +102,7 @@ loss = criterion(output, target)  # -log(sigmoid(1.5))
 print(target.shape, output.shape)
 
 
-"""
+
 te_data = json.load(open('./work/temp_id_gold.json'))
 
 ref_ids = [1,2]

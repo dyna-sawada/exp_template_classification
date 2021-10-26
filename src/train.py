@@ -153,8 +153,9 @@ def main(args):
         
         train(model, train_valid_dataset, args, device, model_dir)
         test(model, test_dataset, args, device, model_dir)
-    
-        
+
+
+        break        
 
 
 
