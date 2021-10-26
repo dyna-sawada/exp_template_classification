@@ -61,8 +61,8 @@ def parse_args():
 
 
 def train(model, tr_va_dataset, args, device, model_dir):
-    m = model
-    _tokenizer = m.get_tokenizer()
+    #m = model
+    #_tokenizer = m.get_tokenizer()
     #os.system("mkdir -p {}".format(args.model_dir))
 
     with open(os.path.join(args.model_dir, "params.json"), "w") as f:
@@ -74,7 +74,7 @@ def train(model, tr_va_dataset, args, device, model_dir):
     t_x = [tr_va_dataset[i][0] for i, _ in enumerate(tr_va_dataset)]
     kf = KFold(n_splits=args.fold_size)
     for fold, (train_index, valid_index) in enumerate(kf.split(t_x)):
-        
+        m = model
         train_dataset = Subset(tr_va_dataset, train_index)
         train_dataloader = DataLoader(train_dataset, args.batch_size, shuffle=True)
         valid_dataset   = Subset(tr_va_dataset, valid_index)
