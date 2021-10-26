@@ -9,6 +9,7 @@ import torch.nn as nn
 
 from sklearn.metrics import recall_score, precision_score, f1_score
 from sklearn.metrics import classification_report
+from sklearn.metrics import coverage_error
 
 
 def main():
@@ -21,17 +22,27 @@ def main():
             y_t = temp_data_dict['temp_id']
             y_true.append(y_t)
     y_true = np.array(y_true)
+    
     print("data size: {}".format(y_true.shape))
 
     n_batch = y_true.shape[0]
     n_label = y_true.shape[1]
-    y_pred = np.random.randint(0, 2, (n_batch, n_label))
-    
-    micro_f1 = f1_score(y_pred, y_true, average='micro')
-    macro_f1 = f1_score(y_pred, y_true, average='macro')
 
-    print(classification_report(y_pred, y_true))
-    print('MicroF1:{:.3f}\tMacroF1:{:.3f}'.format(micro_f1, macro_f1))
+    y_pred_logits = torch.randn(n_batch, n_label)
+    y_pred = torch.sigmoid(y_pred_logits)
+    y_pred = y_pred.detach().numpy().copy()
+
+    coverage = coverage_error(y_true, y_pred)
+
+    y_pred_01 = np.where(y_pred >= 0.5, 1, 0)
+    micro_f1 = f1_score(y_pred_01, y_true, average='micro')
+    macro_f1 = f1_score(y_pred_01, y_true, average='macro')
+
+    print(
+        'MicroF1:{:.3f}\tMacroF1:{:.3f}\tCoverageLoss:{:.3f}'.format(
+            micro_f1, macro_f1, coverage
+            )
+        )
     
 
 
