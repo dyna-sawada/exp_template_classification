@@ -331,14 +331,14 @@ class TemplateClassifier():
 
         coverage = coverage_error(y_trues, y_preds)
 
-        y_preds = np.where(y_preds >= 0.5, 1, 0)
-        micro_f1 = f1_score(y_pred=y_preds, y_true=y_trues, average='micro', zero_division=0)
-        macro_f1 = f1_score(y_pred=y_preds, y_true=y_trues, average='macro', zero_division=0)
+        y_preds_01 = np.where(y_preds >= 0.5, 1, 0)
+        micro_f1 = f1_score(y_pred=y_preds_01, y_true=y_trues, average='micro', zero_division=0)
+        macro_f1 = f1_score(y_pred=y_preds_01, y_true=y_trues, average='macro', zero_division=0)
 
         result_log = {
             "prediction": y_preds.tolist(),
             "gold": y_trues.tolist(),
-            "BCELoss": test_loss,
+            "loss": test_loss,
             "micro_f1": micro_f1,
             "macro_f1": macro_f1,
             "coverage_error": coverage
