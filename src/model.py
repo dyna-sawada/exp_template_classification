@@ -161,7 +161,7 @@ class TemplateClassifier():
                  'weight_decay': 0.0}
             ]
 
-            t_total = ((len(train_loader) + self.args.batch_size - 1) // self.args.batch_size) * self.args.epochs       # ここ用チェック！ len(xy_train)
+            t_total = ((len(train_loader) + self.args.batch_size - 1) // self.args.batch_size) * self.args.epochs       # check
             optimizer = AdamW(trainable_params, lr=self.args.learning_rate, eps=1e-8)
             scheduler = get_linear_schedule_with_warmup(optimizer,
                                                         num_warmup_steps=int(t_total * 0.1),
