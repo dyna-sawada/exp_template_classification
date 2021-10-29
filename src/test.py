@@ -1,10 +1,12 @@
 
 
 import argparse
+from os import openpty
 import pandas as pd
 import numpy as np
 import json
 import glob
+import random
 
 from tqdm import tqdm
 
@@ -16,7 +18,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.dataset import Subset
 import torch.nn.functional as F
 
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GroupKFold
 from sklearn.metrics import recall_score, precision_score, f1_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import coverage_error
@@ -29,6 +31,89 @@ from model import TorchTemplateClassifier
 
 
 
+
+
+group = ['DP_LO_2_11', 'DP_LO_2_24', 'DP_LO_2_11', 'DP_LO_2_11', 'DP_LO_2_11',
+         'DP_LO_2_11', 'DP_LO_2_18', 'DP_LO_2_18', 'DP_LO_2_18', 'DP_LO_2_18',
+         'DP_LO_2_24', 'DP_LO_2_24', 'DP_LO_2_11']
+x = [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13]]
+y = ['a', 'a', 'b', 'c', 'a', 'c', 'b', 'b', 'c', 'a', 'b', 'b', 'c']
+
+
+
+temp_id_gold = json.load(open('./work/temp_id_gold.json'))
+lo_ids = list(temp_id_gold.keys())
+group_id = [lo_ids.index(a) for a in group]
+group_id = np.array(group_id)
+
+gkf = GroupKFold(n_splits=3).split(x, y, groups=group_id)
+for tr, te in gkf:
+    print("%s %s" % (tr, te))
+    print(group_id[tr])
+
+#tensor_group = torch.tensor(group)
+#print(tensor_group)
+
+a = torch.tensor(
+    [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]
+    ]
+)
+index = [0, 1]
+print(a[index])
+
+
+
+
+"""
+全てのデータを事前準備（主に，tokenize&encode）
+lo_ids, input_ids, mask_ids, label_ids (tensor) をそれぞれ入手
+　lo_ids を int に変換．dictを使用する．
+
+GKFの作成． 
+GKF = GroupKFoldn_split=args.iter_size).split(input_ids, groups=lo_ids)
+
+index の取得
+for tr_vl_index, te_index in GKF:
+    input_ids / mask_ids / label_ids / group_ids
+
+→ dataset, dataloaderの作成
+
+
+それぞれの情報を取得
+tr_val_input_ids, test_input_ids = input_ids[tr_val_index], input_ids[te_index]
+tr_val_mask_ids, test_mask_ids = mask_ids[tr_val_index], mask_ids[te_index]
+tr_val_label_ids, test_label_ids = label_ids[tr_val_index], input_ids[te_index]
+tr_val_group_ids = group_ids[tr_val_index]
+
+tr_val_dataset = torch.dataset(tr_val_input_ids, tr_val_mask_ids, tr_val_label_ids)
+te_dataset = torch.dataset(...)
+
+"""
+
+
+
+"""
+temp_id_gold = json.load(open('./work/temp_id_gold.json'))
+len_ids = len(temp_id_gold)
+split_id = int(len_ids / 5 * 4)
+lo_ids = list(temp_id_gold.keys())
+print(len_ids)
+print(lo_ids)
+random.shuffle(lo_ids)
+print()
+#print(lo_ids)
+lo_ids_tr = lo_ids[:split_id]
+lo_ids_te = lo_ids[split_id:]
+print(len(lo_ids_tr), len(lo_ids_te))
+print(lo_ids_tr)
+print(lo_ids_te)
+assert len(lo_ids_tr) + len(lo_ids_te) == len_ids
+"""
+
+"""
 class FocalLoss():
     def __init__(self, gamma=2, alpha=0.25):
         self._gamma = gamma
@@ -91,7 +176,7 @@ print(loss)
 
 
 
-"""
+
 loss_fn = FocalLoss_()
 
 target = torch.ones([10, 64], dtype=torch.float32)  # 64 classes, batch size = 10

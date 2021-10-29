@@ -12,7 +12,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader, TensorDataset, random_split
 from torch.utils.data.dataset import Subset
 
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GroupKFold
 
 from model import TemplateClassifier
 from data import TemplateIdsDataset
@@ -60,48 +60,62 @@ def parse_args():
     return parser.parse_args()
 
 
-def train(_model, tr_va_dataset, args, device, model_dir):
+def train(_model, tr_vl_dataset_info, args, device, model_dir):
     #m = model
     #_tokenizer = m.get_tokenizer()
     #os.system("mkdir -p {}".format(args.model_dir))
 
     with open(os.path.join(args.model_dir, "params.json"), "w") as f:
         json.dump(args.__dict__, f, indent=2)
-    
+            
     logging.info("Config: {}".format(json.dumps(args.__dict__, indent=1)))
 
+    tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids = \
+        tr_vl_dataset_info[0], tr_vl_dataset_info[1], tr_vl_dataset_info[2], tr_vl_dataset_info[3]
 
-    t_x = [tr_va_dataset[i][0] for i, _ in enumerate(tr_va_dataset)]
-    kf = KFold(n_splits=args.fold_size)
-    for fold, (train_index, valid_index) in enumerate(kf.split(t_x)):
+
+    fold = 0
+    GKF_fold = GroupKFold(n_splits=args.fold_size).split(tr_vl_input_ids, groups=sub_lo_ids)
+    for tr_index, vl_index in GKF_fold:
+
+        tr_input_ids, vl_input_ids = tr_vl_input_ids[tr_index], tr_vl_input_ids[vl_index]
+        tr_attention_masks, vl_attention_masks = tr_vl_attention_masks[tr_index], tr_vl_attention_masks[vl_index]
+        tr_labels, vl_labels = tr_vl_labels[tr_index], tr_vl_labels[vl_index]
+        tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_labels)
+        vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_labels)
+
+        tr_dataloader = DataLoader(tr_dataset, args.batch_size, shuffle=True)
+        vl_dataloader = DataLoader(vl_dataset, args.batch_size, shuffle=True)
+
         m = TemplateClassifier(args, device)
-        train_dataset = Subset(tr_va_dataset, train_index)
-        train_dataloader = DataLoader(train_dataset, args.batch_size, shuffle=True)
-        valid_dataset   = Subset(tr_va_dataset, valid_index)
-        valid_dataloader = DataLoader(valid_dataset, args.batch_size, shuffle=False)
 
         logging.info("Fold: {} / {}".format(fold, args.fold_size))
-        logging.info("Training on {} instances.".format(len(train_index)))
-        logging.info("Validating on {} instances.".format(len(valid_index)))
+        logging.info("Training on {} instances.".format(tr_labels.size()[0]))
+        logging.info("Validating on {} instances.".format(vl_labels.size()[0]))
 
         m.fit(
-            train_dataloader,
-            valid_dataloader,
+            tr_dataloader,
+            vl_dataloader,
             model_dir,
             fold
-          )
+        )
+
+        fold += 1
 
 
-def test(model, te_dataset, args, device, model_dir):
-    # Prepare and evaluate the model!
+
+def test(model, te_dataset_info, args, device, model_dir):
+    ## Prepare and evaluate the model!
+    te_input_ids, te_attention_masks, te_labels = \
+        te_dataset_info[0], te_dataset_info[1], te_dataset_info[2]
+    te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_labels)
+    test_dataloader = DataLoader(te_dataset, args.batch_size, shuffle=False)
+    
     for fold_i in range(args.fold_size):
         m = model.from_pretrained(model_dir, args, device, fold_i)
-        _tokenizer = m.get_tokenizer()
+        #_tokenizer = m.get_tokenizer()
 
-        t_x = [te_dataset[i][0] for i, _ in enumerate(te_dataset)]
-
-        test_dataloader = DataLoader(te_dataset, args.batch_size, shuffle=False)
-        logging.info("Testing on {} instances.".format(len(t_x)))
+        logging.info("Testing on {} instances.".format(te_labels.size()[0]))
 
         m.test(
             test_dataloader,
@@ -135,25 +149,30 @@ def main(args):
             MAX_SEQ_LEN
         )
 
-    #_lo_ids, _lo_speeches, _input_ids, _attention_masks, _labels = data_set.preprocess_dataset()
-    dataset = data_set.make_tensor_dataset()
+    lo_ids, _lo_speeches, input_ids, attention_masks, labels = data_set.preprocess_dataset()
 
     
-    for iter in range(args.iteration_size):
-
+    iter = 0
+    GKF_ite = GroupKFold(n_splits=args.iteration_size).split(input_ids, groups=lo_ids)
+    for tr_vl_index, te_index in GKF_ite:
+        
         model_dir = os.path.join(args.model_dir, 'iter_{}'.format(iter))
         os.system("mkdir -p {}".format(model_dir))
 
         logging.info("Iteration: {} / {}".format(iter, args.iteration_size))
 
-        n_split = 1 - (1 / args.iteration_size)
-        train_size = int(n_split * len(dataset))
-        test_size = len(dataset) - train_size
-        train_valid_dataset, test_dataset = random_split(dataset, [train_size, test_size])
-        
-        train(model, train_valid_dataset, args, device, model_dir)
-        test(model, test_dataset, args, device, model_dir)
+        tr_vl_input_ids, te_input_ids = input_ids[tr_vl_index], input_ids[te_index]
+        tr_vl_attention_masks, te_attention_masks = attention_masks[tr_vl_index], attention_masks[te_index]
+        tr_vl_labels, te_labels = labels[tr_vl_index], labels[te_index]
+        sub_lo_ids = lo_ids[tr_vl_index]
+        tr_vl_dataset_info = (tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids)
+        te_dataset_info = (te_input_ids, te_attention_masks, te_labels)
 
+        
+        train(model, tr_vl_dataset_info, args, device, model_dir)
+        test(model, te_dataset_info, args, device, model_dir)
+        
+        iter += 1
 
 
 

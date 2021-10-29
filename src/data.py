@@ -24,23 +24,27 @@ class TemplateIdsDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-        
+
 
     def preprocess_dataset(self):
-        _lo_ids = []
+        lo_ids = []
         _lo_speeches = []
         input_ids = []
         attention_masks = []
         labels = []
-        
+        used_lo_ids = list(self.data.keys())
+
         # tokenizer setting
         sp_tokens = ['<PM>', '</PM>', '<LO>', '</LO>', '<FB>', '</FB>']
         self.tok.add_tokens(sp_tokens, special_tokens=True)
 
-        for lo_id, lo_id_dict in self.data.items():
+        for lo_id_name, lo_id_dict in self.data.items():
+
             for _fb_unit_id, temp_data_dict in lo_id_dict['temp_data'].items():
-                pm_speech = self.data[lo_id]['pm_speech']
-                lo_speech = self.data[lo_id]['lo_speech']
+
+                lo_id = used_lo_ids.index(lo_id_name)
+                pm_speech = self.data[lo_id_name]['pm_speech']
+                lo_speech = self.data[lo_id_name]['lo_speech']
                 ref_id = temp_data_dict['ref_id']
                 label = temp_data_dict['temp_id']
 
@@ -83,21 +87,22 @@ class TemplateIdsDataset(Dataset):
                             )
                 
                 
-                _lo_ids.append(lo_id)
+                lo_ids.append(lo_id)
                 _lo_speeches.append(lo_speech)
                 input_ids.append(encoding['input_ids'])
                 attention_masks.append(encoding['attention_mask'])
                 labels.append(label)
-            
-        
+
+
+        lo_ids = torch.tensor(lo_ids)
         input_ids = torch.cat(input_ids, dim=0)
         attention_masks = torch.cat(attention_masks, dim=0)
         labels = torch.FloatTensor(labels)
 
-        return _lo_ids, _lo_speeches, input_ids, attention_masks, labels
+        return lo_ids, _lo_speeches, input_ids, attention_masks, labels
     
 
-    def make_tensor_dataset(self):
+    def _make_tensor_dataset(self):
         _lo_ids, _lo_speeches, input_ids, attention_masks, labels = self.preprocess_dataset()
 
         dataset = TensorDataset(input_ids, attention_masks, labels)
