@@ -18,10 +18,13 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.dataset import Subset
 import torch.nn.functional as F
 
+import tensorflow as tf
+
 from sklearn.model_selection import KFold, GroupKFold
 from sklearn.metrics import recall_score, precision_score, f1_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import coverage_error
+from sklearn.metrics import roc_auc_score, roc_curve, log_loss
 
 from transformers import AutoTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup
 
@@ -33,6 +36,32 @@ from model import TorchTemplateClassifier
 
 
 
+
+
+y_true = np.array(
+                [
+                    [0,0,1,1],
+                    [0,0,0,1],
+                    [1,1,0,0]
+                ]
+                )
+
+y_scores = np.array(
+                [
+                    [0.1, 0.4, 0.35, 0.6],
+                    [0.2, 0.3, 0.2, 0.9],
+                    [0.6, 0.4, 0.1, 0.4]
+                ]
+                )
+auc = roc_auc_score(y_true, y_scores, average='micro')
+print(auc)
+lg_loss = log_loss(y_true, y_scores)
+print(lg_loss)
+ls_fn = nn.BCELoss()
+print(ls_fn(torch.from_numpy(y_true.astype(np.float32)), torch.from_numpy(y_scores.astype(np.float32))))
+
+
+"""
 group = ['DP_LO_2_11', 'DP_LO_2_24', 'DP_LO_2_11', 'DP_LO_2_11', 'DP_LO_2_11',
          'DP_LO_2_11', 'DP_LO_2_18', 'DP_LO_2_18', 'DP_LO_2_18', 'DP_LO_2_18',
          'DP_LO_2_24', 'DP_LO_2_24', 'DP_LO_2_11']
@@ -64,8 +93,7 @@ a = torch.tensor(
 index = [0, 1]
 print(a[index])
 
-
-
+"""
 
 """
 全てのデータを事前準備（主に，tokenize&encode）
