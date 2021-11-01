@@ -183,14 +183,14 @@ def main(args):
         data_set.preprocess_dataset()
     
     
-    iter = 0
+    iter_i = 0
     GKF_iter = GroupKFold(n_splits=args.iteration_size).split(input_ids, groups=lo_ids)
     for tr_vl_index, te_index in GKF_iter:
         
-        model_dir = os.path.join(args.model_dir, 'iter_{}'.format(iter))
+        model_dir = os.path.join(args.model_dir, 'iter_{}'.format(iter_i))
         os.system("mkdir -p {}".format(model_dir))
 
-        logging.info("Iteration: {} / {}".format(iter, args.iteration_size))
+        logging.info("Iteration: {} / {}".format(iter_i, args.iteration_size))
 
         tr_vl_data_ids, te_data_ids = data_ids[tr_vl_index], data_ids[te_index]
         tr_vl_input_ids, te_input_ids = input_ids[tr_vl_index], input_ids[te_index]
@@ -215,7 +215,7 @@ def main(args):
         train(model, tr_vl_dataset_info, args, device, model_dir)
         test(model, te_dataset_info, args, device, model_dir)
         
-        iter += 1
+        iter_i += 1
 
 
 
