@@ -57,8 +57,15 @@ auc = roc_auc_score(y_true, y_scores, average='micro')
 print(auc)
 lg_loss = log_loss(y_true, y_scores)
 print(lg_loss)
-ls_fn = nn.BCELoss()
-print(ls_fn(torch.from_numpy(y_true.astype(np.float32)), torch.from_numpy(y_scores.astype(np.float32))))
+
+sort_id = np.arange(3)
+print(sort_id)
+np.random.shuffle(sort_id)
+print(sort_id)
+y_true_r = y_true[sort_id]
+y_scores_r = y_scores[sort_id]
+print(y_true_r)
+print(y_scores_r)
 
 
 """

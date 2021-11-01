@@ -182,6 +182,13 @@ def main(args):
     data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, labels = \
         data_set.preprocess_dataset()
     
+    sort_ids = np.arange(data_ids.size()[0])
+    np.random.shuffle(sort_ids)
+    data_ids = data_ids[sort_ids]
+    lo_ids = lo_ids[sort_ids]
+    input_ids = input_ids[sort_ids]
+    attention_masks = attention_masks[sort_ids]
+    labels = labels[sort_ids]
     
     iter_i = 0
     GKF_iter = GroupKFold(n_splits=args.iteration_size).split(input_ids, groups=lo_ids)
@@ -216,6 +223,7 @@ def main(args):
         test(model, te_dataset_info, args, device, model_dir)
         
         iter_i += 1
+    
 
 
 
