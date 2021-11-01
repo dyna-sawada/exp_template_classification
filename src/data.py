@@ -27,6 +27,7 @@ class TemplateIdsDataset(Dataset):
 
 
     def preprocess_dataset(self):
+        data_ids = []
         lo_ids = []
         _lo_speeches = []
         input_ids = []
@@ -38,6 +39,7 @@ class TemplateIdsDataset(Dataset):
         sp_tokens = ['<PM>', '</PM>', '<LO>', '</LO>', '<FB>', '</FB>']
         self.tok.add_tokens(sp_tokens, special_tokens=True)
 
+        data_id = 0
         for lo_id_name, lo_id_dict in self.data.items():
 
             for _fb_unit_id, temp_data_dict in lo_id_dict['temp_data'].items():
@@ -92,14 +94,17 @@ class TemplateIdsDataset(Dataset):
                 input_ids.append(encoding['input_ids'])
                 attention_masks.append(encoding['attention_mask'])
                 labels.append(label)
+                data_ids.append(data_id)
 
+                data_id += 1
 
+        data_ids = torch.tensor(data_ids)
         lo_ids = torch.tensor(lo_ids)
         input_ids = torch.cat(input_ids, dim=0)
         attention_masks = torch.cat(attention_masks, dim=0)
         labels = torch.FloatTensor(labels)
 
-        return lo_ids, _lo_speeches, input_ids, attention_masks, labels
+        return data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, labels
     
 
     def _make_tensor_dataset(self):

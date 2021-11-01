@@ -143,7 +143,7 @@ class TemplateClassifier():
             train_loader: torch.utils.data.DataLoader,
             valid_loader: torch.utils.data.DataLoader,
             fn_save_to_dir,
-            fold
+            fold_i
             ):
         self.classifier.train()
 
@@ -220,7 +220,7 @@ class TemplateClassifier():
             # Writing to the log file.
             with open(os.path.join(
                                 fn_save_to_dir, 
-                                "train_log_fold_{}.json".format(fold)),
+                                "train_log_fold_{}.json".format(fold_i)),
                                 "w"
                                 ) as f:
 
@@ -239,7 +239,7 @@ class TemplateClassifier():
             logging.info("Saving the best model to {}...".format(fn_save_to_dir))
             torch.save(
                     pickle.loads(best_model), 
-                    os.path.join(fn_save_to_dir, "best_model_fold_{}.pt".format(fold))
+                    os.path.join(fn_save_to_dir, "best_model_fold_{}.pt".format(fold_i))
                     )
 
 

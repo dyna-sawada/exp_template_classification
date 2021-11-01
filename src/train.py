@@ -70,14 +70,15 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
             
     logging.info("Config: {}".format(json.dumps(args.__dict__, indent=1)))
 
-    tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids = \
-        tr_vl_dataset_info[0], tr_vl_dataset_info[1], tr_vl_dataset_info[2], tr_vl_dataset_info[3]
+    tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids, tr_vl_data_ids, te_data_ids = \
+        tr_vl_dataset_info[0], tr_vl_dataset_info[1], tr_vl_dataset_info[2], tr_vl_dataset_info[3], tr_vl_dataset_info[4], tr_vl_dataset_info[5]
 
 
-    fold = 0
+    fold_i = 0
     GKF_fold = GroupKFold(n_splits=args.fold_size).split(tr_vl_input_ids, groups=sub_lo_ids)
     for tr_index, vl_index in GKF_fold:
 
+        tr_data_ids, vl_data_ids = tr_vl_data_ids[tr_index], tr_vl_data_ids[vl_index]
         tr_input_ids, vl_input_ids = tr_vl_input_ids[tr_index], tr_vl_input_ids[vl_index]
         tr_attention_masks, vl_attention_masks = tr_vl_attention_masks[tr_index], tr_vl_attention_masks[vl_index]
         tr_labels, vl_labels = tr_vl_labels[tr_index], tr_vl_labels[vl_index]
@@ -89,18 +90,47 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
 
         m = TemplateClassifier(args, device)
 
-        logging.info("Fold: {} / {}".format(fold, args.fold_size))
+        tr_data_ids, vl_data_ids, te_data_ids = \
+            tr_data_ids.tolist(), vl_data_ids.tolist(), te_data_ids.tolist()
+
+        data_split_info = {
+                            'train':
+                            {
+                                'length':len(tr_data_ids),
+                                'data_ids':tr_data_ids
+                            },
+                            'valid':
+                            {
+                                'length':len(vl_data_ids),
+                                'data_ids':vl_data_ids
+                            },
+                            'test':
+                            {
+                                'length':len(te_data_ids),
+                                'data_ids':te_data_ids
+                            }
+                        }
+
+        assert len(tr_data_ids) + len(vl_data_ids) + len(te_data_ids) == 567
+
+        with open(os.path.join(model_dir, "data_split_fold_{}.json".format(fold_i)), "w") as f:
+            json.dump(data_split_info, f, indent=2)
+
+
+        logging.info("Fold: {} / {}".format(fold_i, args.fold_size))
         logging.info("Training on {} instances.".format(tr_labels.size()[0]))
         logging.info("Validating on {} instances.".format(vl_labels.size()[0]))
+        logging.info("Saving training instance ids to {}.".format(model_dir))
+ 
 
         m.fit(
             tr_dataloader,
             vl_dataloader,
             model_dir,
-            fold
+            fold_i
         )
 
-        fold += 1
+        fold_i += 1
 
 
 
@@ -110,7 +140,7 @@ def test(model, te_dataset_info, args, device, model_dir):
         te_dataset_info[0], te_dataset_info[1], te_dataset_info[2]
     te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_labels)
     test_dataloader = DataLoader(te_dataset, args.batch_size, shuffle=False)
-    
+
     for fold_i in range(args.fold_size):
         m = model.from_pretrained(model_dir, args, device, fold_i)
         #_tokenizer = m.get_tokenizer()
@@ -149,31 +179,43 @@ def main(args):
             MAX_SEQ_LEN
         )
 
-    lo_ids, _lo_speeches, input_ids, attention_masks, labels = data_set.preprocess_dataset()
-
+    data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, labels = \
+        data_set.preprocess_dataset()
+    
     
     iter = 0
-    GKF_ite = GroupKFold(n_splits=args.iteration_size).split(input_ids, groups=lo_ids)
-    for tr_vl_index, te_index in GKF_ite:
+    GKF_iter = GroupKFold(n_splits=args.iteration_size).split(input_ids, groups=lo_ids)
+    for tr_vl_index, te_index in GKF_iter:
         
         model_dir = os.path.join(args.model_dir, 'iter_{}'.format(iter))
         os.system("mkdir -p {}".format(model_dir))
 
         logging.info("Iteration: {} / {}".format(iter, args.iteration_size))
 
+        tr_vl_data_ids, te_data_ids = data_ids[tr_vl_index], data_ids[te_index]
         tr_vl_input_ids, te_input_ids = input_ids[tr_vl_index], input_ids[te_index]
         tr_vl_attention_masks, te_attention_masks = attention_masks[tr_vl_index], attention_masks[te_index]
         tr_vl_labels, te_labels = labels[tr_vl_index], labels[te_index]
         sub_lo_ids = lo_ids[tr_vl_index]
-        tr_vl_dataset_info = (tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids)
-        te_dataset_info = (te_input_ids, te_attention_masks, te_labels)
+        tr_vl_dataset_info = (
+                                tr_vl_input_ids,
+                                tr_vl_attention_masks,
+                                tr_vl_labels,
+                                sub_lo_ids,
+                                tr_vl_data_ids,
+                                te_data_ids
+                            )
+        te_dataset_info = (
+                                te_input_ids,
+                                te_attention_masks,
+                                te_labels
+                            )
 
         
         train(model, tr_vl_dataset_info, args, device, model_dir)
         test(model, te_dataset_info, args, device, model_dir)
         
         iter += 1
-
 
 
 
