@@ -182,6 +182,9 @@ def main(args):
     data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, labels = \
         data_set.preprocess_dataset()
     
+    #labels = labels.to('cpu').detach().numpy().copy()
+    #print(np.count_nonzero(labels == 1, axis=1))
+    
     sort_ids = np.arange(data_ids.size()[0])
     np.random.shuffle(sort_ids)
     data_ids = data_ids[sort_ids]
@@ -221,7 +224,7 @@ def main(args):
         
         train(model, tr_vl_dataset_info, args, device, model_dir)
         test(model, te_dataset_info, args, device, model_dir)
-        
+        break
         iter_i += 1
     
 
