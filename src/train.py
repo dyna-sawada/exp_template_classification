@@ -90,8 +90,9 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
 
         m = TemplateClassifier(args, device)
 
-        tr_data_ids, vl_data_ids, te_data_ids = \
-            tr_data_ids.tolist(), vl_data_ids.tolist(), te_data_ids.tolist()
+        tr_data_ids, vl_data_ids = tr_data_ids.tolist(), vl_data_ids.tolist()
+        if type(te_data_ids) is torch.Tensor:
+            te_data_ids = te_data_ids.tolist()
 
         data_split_info = {
                             'train':
