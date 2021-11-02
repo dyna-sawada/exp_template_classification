@@ -24,7 +24,8 @@ from sklearn.model_selection import KFold, GroupKFold
 from sklearn.metrics import recall_score, precision_score, f1_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import coverage_error
-from sklearn.metrics import roc_auc_score, roc_curve, log_loss
+from sklearn.metrics import roc_auc_score, roc_curve, log_loss, precision_recall_curve
+from sklearn.metrics import label_ranking_average_precision_score, average_precision_score
 
 from transformers import AutoTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup
 
@@ -35,13 +36,11 @@ from model import TorchTemplateClassifier
 
 
 
-
-
-
+"""
 y_true = np.array(
                 [
                     [0,0,1,1],
-                    [0,0,0,1],
+                    [0,0,0,0],
                     [1,1,0,0]
                 ]
                 )
@@ -53,11 +52,35 @@ y_scores = np.array(
                     [0.6, 0.4, 0.1, 0.4]
                 ]
                 )
-auc = roc_auc_score(y_true, y_scores, average='micro')
-print(auc)
-lg_loss = log_loss(y_true, y_scores)
-print(lg_loss)
 
+for y_t, y_p in zip(y_true, y_scores):
+    pr, rc, th = precision_recall_curve(y_t, y_p)
+    print(pr)
+    print(rc)
+    print(th)
+"""
+
+y_true = torch.load('y_val_true_0_0.pt')
+y_pred = torch.load('y_val_pred_0_0.pt')
+
+np.set_printoptions(threshold=np.inf)
+#print(y_true)
+map_0 = average_precision_score(y_true, y_pred, average='micro')
+#map_1 = average_precision_score(y_true, y_pred, average='macro')
+#map_2 = average_precision_score(y_true, y_pred, average='weighted')
+map_3 = average_precision_score(y_true, y_pred, average='samples')
+print(map_0)
+#print(map_1)
+#print(map_2)
+print(map_3)
+
+#auc = roc_auc_score(y_true, y_scores, average='micro')
+#print(auc)
+#lg_loss = log_loss(y_true, y_scores)
+#print(lg_loss)
+
+
+"""
 sort_id = np.arange(3)
 print(sort_id)
 np.random.shuffle(sort_id)
@@ -66,7 +89,7 @@ y_true_r = y_true[sort_id]
 y_scores_r = y_scores[sort_id]
 print(y_true_r)
 print(y_scores_r)
-
+"""
 
 """
 group = ['DP_LO_2_11', 'DP_LO_2_24', 'DP_LO_2_11', 'DP_LO_2_11', 'DP_LO_2_11',

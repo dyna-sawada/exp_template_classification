@@ -11,7 +11,7 @@ import numpy as np
 
 #from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
-from sklearn.metrics import coverage_error, roc_auc_score
+from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score
 
 import torch
 import torch.nn as nn
@@ -175,7 +175,7 @@ class TemplateClassifier():
 
         best_val_mse, best_model = 9999, None
         train_losses, val_losses = [], []
-        _micro_f1s, _macro_f1s, aucs, coverages = [], [], [], []
+        _micro_f1s, _macro_f1s, mAPs, coverages = [], [], [], []
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -198,9 +198,16 @@ class TemplateClassifier():
             coverage = coverage_error(y_val_true, y_val_pred)
             coverages.append(coverage)
 
-            auc = roc_auc_score(y_val_true, y_val_pred, average='micro')
-            aucs.append(auc)
-            logging.info("AUC micro Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(auc, coverage))
+            mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
+            mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
+            mAP_samples = average_precision_score(y_val_true, y_val_pred, average='samples')
+            mAPs.append([mAP_micro, mAP_weigthed, mAP_samples])
+
+            logging.info(
+                "mAP micro Valid: {:.3f}\tmAP weighted Valid: {:.3f}\tmAP samples Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
+                    mAP_micro, mAP_weigthed, mAP_samples, coverage
+                    )
+                )
 
             """
             y_val_pred = np.where(y_val_pred >= 0.5, 1, 0)
@@ -235,7 +242,8 @@ class TemplateClassifier():
                     "val_losses": val_losses,
                     #"micro_f1": micro_f1s,
                     #"macro_f1": macro_f1s,
-                    "AUC": aucs,
+                    #"AUC": aucs,
+                    "mAP": mAPs,
                     "coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
@@ -243,7 +251,7 @@ class TemplateClassifier():
                 json.dump(train_log, f, indent=2)
 
         if best_model is not None:
-            logging.info("Saving the best model to {}...".format(fn_save_to_dir))
+            logging.info("Saving the best model to {}.".format(fn_save_to_dir))
             torch.save(
                     pickle.loads(best_model), 
                     os.path.join(fn_save_to_dir, "best_model_fold_{}.pt".format(fold_i))
@@ -292,8 +300,15 @@ class TemplateClassifier():
         
         
         coverage = coverage_error(y_trues, y_preds)
-        auc = roc_auc_score(y_trues, y_preds, average='micro')
-        logging.info("AUC micro Train: {:.3f}\tCoverage Loss Valid: {:.3f}".format(auc, coverage))
+        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
+
+        logging.info(
+            "mAP micro Train: {:.3f}\tmAP weighted Train: {:.3f}\tmAP samples Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
+                mAP_micro, mAP_weighted, mAP_samples, coverage
+                )
+            )
         
         """
         y_preds = np.where(y_preds >= 0.5, 1, 0)
@@ -340,7 +355,10 @@ class TemplateClassifier():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
         coverage = coverage_error(y_trues, y_preds)
-        auc = roc_auc_score(y_trues, y_preds, average='micro')
+        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
+        mAPs = [mAP_micro, mAP_weighted, mAP_samples]
 
         """
         y_preds_01 = np.where(y_preds >= 0.5, 1, 0)
@@ -354,7 +372,8 @@ class TemplateClassifier():
             "loss": test_loss,
             #"micro_f1": micro_f1,
             #"macro_f1": macro_f1,
-            "AUC": auc,
+            #"AUC": auc,
+            "mAP": mAPs,
             "coverage_error": coverage
         }
 
