@@ -247,7 +247,7 @@ class TemplateClassifier():
                     "coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
-
+                logging.info("Updating train log file.")
                 json.dump(train_log, f, indent=2)
 
         if best_model is not None:
