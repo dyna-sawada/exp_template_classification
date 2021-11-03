@@ -3,6 +3,7 @@ import os
 import argparse
 import json
 import logging
+import random
 
 import numpy as np
 
@@ -24,6 +25,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
+        '-seed', '--seed', required=True, default=42, type=int,
+        help="Random SEED."
+    )
+    parser.add_argument(
         '-out', '--model-dir', required=True,
         help="Output directory."
     )
@@ -44,13 +49,13 @@ def parse_args():
         '-fd', '--fold-size', default=5, type=int,
         help="K-fold.")
     parser.add_argument(
-        '-ep', '--epochs', default=20, type=int,
+        '-ep', '--epochs', default=30, type=int,
         help="Max training epochs.")
     parser.add_argument(
         '-bs', '--batch-size', default=2, type=int,
         help="Training batch size.")
     parser.add_argument(
-        '-lr', '--learning-rate', default=1e-6, type=float,
+        '-lr', '--learning-rate', default=5e-5, type=float,
         help="Learning rate.")
     parser.add_argument(
         '-ga', '--grad-accum', default=16, type=int,
@@ -158,7 +163,14 @@ def test(model, te_dataset_info, args, device, model_dir):
 
 def main(args):
     
-    np.set_printoptions(precision=3, suppress=False)
+    # Fix random seed
+    seed = args.seed
+    random.seed(seed)
+    np.random(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+
 
     MAX_SEQ_LEN = 512
     os.system("mkdir -p {}".format(args.model_dir))
