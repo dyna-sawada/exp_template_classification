@@ -28,7 +28,7 @@ def main():
     for iter_i in range(params_dict['iteration_size']):
         data_split_dict = json.load(
             open(
-                './out_test/ite_{}/data_split_fold_0'.format(iter_i)
+                './out_test/iter_{}/data_split_fold_0.json'.format(iter_i)
             )
         )
         test_data_ids = data_split_dict['test']['data_ids']
@@ -55,7 +55,7 @@ def main():
 
         print(
             'Iter: {}\tmAP micro: {:.3f}\tmAP weighted: {:.3f}\tmAP samples: {:.3f}\tCoverageLoss:{:.3f}'.format(
-                mAP_m, mAP_w, mAP_s, coverage
+                iter_i, mAP_m, mAP_w, mAP_s, coverage
                 )
             )
     
