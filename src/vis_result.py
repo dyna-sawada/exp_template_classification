@@ -31,11 +31,11 @@ for i in range(n_iter):
         test_mAP_s.append(mAPs[2])
 
     print(
-            "Iter:{}\tLoss:{:.3f}\tmAP micro:{:.3f}\tmAP weighted:{:.3f}\tmAP samples:{:.3f}\tCoverage:{:.3f}".format(
+            "Iter: {}\tLoss: {:.3f}\tmAP micro: {:.3f}\tmAP weighted: {:.3f}\tmAP samples: {:.3f}\tCoverageLoss: {:.3f}".format(
                 i, np.mean(test_loss), np.mean(test_mAP_m), np.mean(test_mAP_w), np.mean(test_mAP_s), np.mean(test_coverage)
             )
         )
-
+    break
 
 
 """
@@ -54,7 +54,7 @@ mAP_sample = [m[2] for m in mAPs]
 
 epoch = [e for e, _ in enumerate(train_losses)]
 #print(epoch)
-
+print(len(epoch))
 
 #plt.plot(epoch, train_losses, label="train loss")
 #plt.plot(epoch, valid_losses, label="valid loss")
