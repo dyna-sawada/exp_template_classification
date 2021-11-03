@@ -49,7 +49,7 @@ def parse_args():
         '-fd', '--fold-size', default=5, type=int,
         help="K-fold.")
     parser.add_argument(
-        '-ep', '--epochs', default=30, type=int,
+        '-ep', '--epochs', default=20, type=int,
         help="Max training epochs.")
     parser.add_argument(
         '-bs', '--batch-size', default=2, type=int,
@@ -166,7 +166,7 @@ def main(args):
     # Fix random seed
     seed = args.seed
     random.seed(seed)
-    np.random(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
