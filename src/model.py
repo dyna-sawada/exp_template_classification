@@ -11,7 +11,7 @@ import numpy as np
 
 #from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
-from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score
+from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
 
 import torch
 import torch.nn as nn
@@ -21,6 +21,16 @@ import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
 
 
+
+
+def one_error(y_true, y_pred):
+    count = 0
+    for y_p, y_t in zip(y_pred, y_true):
+        top_cls = np.argmax(y_p)
+        if y_t[top_cls] != 1:
+            count += 1
+
+    return count / len(y_pred)
 
 
 class FocalLoss(nn.Module):
@@ -360,6 +370,9 @@ class TemplateClassifier():
         mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
         mAPs = [mAP_micro, mAP_weighted, mAP_samples]
 
+        one_err = one_error(y_trues, y_preds)
+        rank_loss = label_ranking_loss(y_trues, y_preds)
+
         """
         y_preds_01 = np.where(y_preds >= 0.5, 1, 0)
         micro_f1 = f1_score(y_pred=y_preds_01, y_true=y_trues, average='micro', zero_division=0)
@@ -373,8 +386,10 @@ class TemplateClassifier():
             #"micro_f1": micro_f1,
             #"macro_f1": macro_f1,
             #"AUC": auc,
-            "mAP": mAPs,
-            "coverage_error": coverage
+            "one_error": one_err,
+            "coverage_error": coverage,
+            "rank_loss": rank_loss,
+            "mAP": mAPs
         }
 
         print(result_log)
