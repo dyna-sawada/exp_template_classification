@@ -10,7 +10,7 @@ import torch.nn as nn
 
 #from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
-from sklearn.metrics import coverage_error, average_precision_score, label_ranking_loss
+from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
 
 from model import FocalLoss
 
@@ -49,7 +49,8 @@ def main(args):
     np_y_true = np.array(y_true)
     n_each_temp_id = np.sum(np_y_true, axis=0)
 
-
+    print('--- {} model ---'.format(args.baseline_model))
+    
     for iter_i in range(params_dict['iteration_size']):
 
         data_split_dict = json.load(
@@ -74,8 +75,6 @@ def main(args):
             y_pred_logits = torch.randn(n_batch, n_label)
             y_pred_i = torch.sigmoid(y_pred_logits)
             y_pred_i = y_pred_i.detach().numpy().copy()
-
-            print('---Random Model---')
         
         elif args.baseline_model == 'majority':
             ####################
@@ -84,8 +83,6 @@ def main(args):
             majority_position = np.argmax(n_each_temp_id)
             y_pred_i = np.zeros((n_batch, n_label-1))
             y_pred_i = np.insert(y_pred_i, majority_position, 1, axis=1)
-            
-            print('---Majority Model---')
         
         elif args.baseline_model == 'sampling':
             ####################
@@ -95,9 +92,6 @@ def main(args):
             y_pred_i = np.tile(y_pred_i, (n_batch, 1))
             print(y_pred_i)
 
-            print('---Sampling Model---')
-
-
 
         loss = loss_fn(
                 torch.from_numpy(y_pred_i.astype(np.float32)),
@@ -105,9 +99,11 @@ def main(args):
                 )
         coverage = coverage_error(y_true_i, y_pred_i)
 
-        mAP_m = average_precision_score(y_true_i, y_pred_i, average='micro')
+        #mAP_m = average_precision_score(y_true_i, y_pred_i, average='micro')
         mAP_w = average_precision_score(y_true_i, y_pred_i, average='weighted')
-        mAP_s = average_precision_score(y_true_i, y_pred_i, average='samples')
+        #mAP_s = average_precision_score(y_true_i, y_pred_i, average='samples')
+
+        roc_auc = roc_auc_score(y_true_i, y_pred_i, average='weighted')
 
         rank_loss = label_ranking_loss(y_true_i, y_pred_i)
         one_err = one_error(y_true_i, y_pred_i)
@@ -119,9 +115,9 @@ def main(args):
         print(
             'Iter: {}\tLoss: {:.3f}\t \
             OneError: {:.3f}\tCoverageLoss: {:.3f}\t \
-            RankingLoss: {:.3f}\tmAP micro: {:.3f}\t \
-            mAP weighted: {:.3f}\tmAP samples: {:.3f}'.format(
-                iter_i, loss, one_err, coverage, rank_loss, mAP_m, mAP_w, mAP_s
+            RankingLoss: {:.3f}\tmAP weighted: {:.3f}\t \
+            ROC AUC weighted: {:.3f}'.format(
+                iter_i, loss, one_err, coverage, rank_loss, mAP_w, roc_auc
                 )
             )
     
