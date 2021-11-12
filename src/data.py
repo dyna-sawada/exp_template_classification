@@ -50,6 +50,8 @@ class TemplateIdsDataset(Dataset):
                 ref_id = temp_data_dict['ref_id']
                 label = temp_data_dict['temp_id']
 
+                """ 
+                ## PM speech + LO speech + Reference texts
                 if ref_id == '*':
                     lo_speech = '<FB> ' + lo_speech + ' </FB>'
                 else:    
@@ -77,7 +79,22 @@ class TemplateIdsDataset(Dataset):
                     input_speech = '<PM> ' + '.'.join(pm_texts[j:]) + ' </PM>' + lo_speech
                     input_tokens = self.tok.tokenize(input_speech)
                     j += 1
+                """
 
+                ## Only Reference texts
+                if ref_id == '*':
+                    input_speech = lo_speech
+                else:
+                    lo_texts = lo_speech.split('.')
+                    input_speech = ''
+                    for i, lo_text in enumerate(lo_texts):
+                        if i == len(lo_texts) - 1:
+                            break
+                        if i in ref_id:
+                            input_speech += lo_text
+
+                #print(input_speech)
+                #print()
 
                 encoding = self.tok(
                             input_speech,
