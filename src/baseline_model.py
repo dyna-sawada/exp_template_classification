@@ -99,11 +99,11 @@ def main(args):
                 )
         coverage = coverage_error(y_true_i, y_pred_i)
 
-        #mAP_m = average_precision_score(y_true_i, y_pred_i, average='micro')
-        mAP_w = average_precision_score(y_true_i, y_pred_i, average='weighted')
+        mAP_m = average_precision_score(y_true_i, y_pred_i, average='micro')
+        #mAP_w = average_precision_score(y_true_i, y_pred_i, average='weighted')
         #mAP_s = average_precision_score(y_true_i, y_pred_i, average='samples')
 
-        roc_auc = roc_auc_score(y_true_i, y_pred_i, average='weighted')
+        roc_auc = roc_auc_score(y_true_i, y_pred_i, average='micro')
 
         rank_loss = label_ranking_loss(y_true_i, y_pred_i)
         one_err = one_error(y_true_i, y_pred_i)
@@ -115,9 +115,9 @@ def main(args):
         print(
             'Iter: {}\tLoss: {:.3f}\t \
             OneError: {:.3f}\tCoverageLoss: {:.3f}\t \
-            RankingLoss: {:.3f}\tmAP weighted: {:.3f}\t \
-            ROC AUC weighted: {:.3f}'.format(
-                iter_i, loss, one_err, coverage, rank_loss, mAP_w, roc_auc
+            RankingLoss: {:.3f}\tmAP micro: {:.3f}\t \
+            ROC AUC micro: {:.3f}'.format(
+                iter_i, loss, one_err, coverage, rank_loss, mAP_m, roc_auc
                 )
             )
     
