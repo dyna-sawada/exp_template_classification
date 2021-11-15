@@ -2,6 +2,7 @@
 
 import argparse
 from os import openpty
+from numpy.lib.function_base import average
 import pandas as pd
 import numpy as np
 import json
@@ -41,7 +42,7 @@ y_true = np.array(
                 [
                     [0,0,1,1],
                     [0,0,1,0],
-                    [1,1,0,0]
+                    [0,1,0,0]
                 ]
                 )
 
@@ -73,6 +74,7 @@ print(map_0)
 print(map_1)
 print(map_2)
 print(map_3)
+print(roc_auc_score(y_true, y_pred, average='micro'))
 
 #auc = roc_auc_score(y_true, y_scores, average='micro')
 #print(auc)

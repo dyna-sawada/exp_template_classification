@@ -13,7 +13,7 @@ param_info = json.load(open(param_info_file))
 n_fold = param_info['fold_size']
 n_iter = param_info['iteration_size']
 
-
+"""
 
 for i in range(n_iter):
     test_loss, test_one_err, test_coverage, test_rank_loss,\
@@ -55,25 +55,21 @@ result_data = json.load(open(result_file))
 train_losses = result_data['train_losses']
 valid_losses = result_data['val_losses']
 coverages = result_data['coverage_error']
-mAPs = result_data['mAP']
-mAP_micro = [m[0] for m in mAPs]
-mAP_weight = [m[1] for m in mAPs]
-mAP_sample = [m[2] for m in mAPs]
+mAP = result_data['mAP']
+roc_auc = result_data['ROC_AUC']
 #print(train_losses, valid_losses, coverages)
 
 epoch = [e for e, _ in enumerate(train_losses)]
 #print(epoch)
 print(len(epoch))
 
-#plt.plot(epoch, train_losses, label="train loss")
-#plt.plot(epoch, valid_losses, label="valid loss")
+plt.plot(epoch, train_losses, label="train loss")
+plt.plot(epoch, valid_losses, label="valid loss")
 #plt.plot(epoch, coverages, label="coverage")
-plt.plot(epoch, mAP_micro, label="mAP_micro")
-plt.plot(epoch, mAP_weight, label="mAP_weighted")
-plt.plot(epoch, mAP_sample, label="mAP_sample")
+#plt.plot(epoch, mAP, label="mAP")
+#plt.plot(epoch, roc_auc, label="ROC_AUC")
 
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 
 plt.show()
-"""
 

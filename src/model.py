@@ -212,17 +212,17 @@ class TemplateClassifier():
             coverage = coverage_error(y_val_true, y_val_pred)
             coverages.append(coverage)
 
-            #mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
-            mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
+            mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
+            #mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
             #mAP_samples = average_precision_score(y_val_true, y_val_pred, average='samples')
-            mAPs.append(mAP_weigthed)
+            mAPs.append(mAP_micro)
 
-            roc_auc = roc_auc_score(y_val_true, y_val_pred, average='weighted')
+            roc_auc = roc_auc_score(y_val_true, y_val_pred, average='micro')
             roc_aucs.append(roc_auc)
 
             logging.info(
-                "mAP weigthed Valid: {:.3f}\tROC AUC weighted Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
-                    mAP_weigthed, roc_auc, coverage
+                "mAP micro Valid: {:.3f}\tROC AUC micro Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
+                    mAP_micro, roc_auc, coverage
                     )
                 )
 
@@ -318,15 +318,15 @@ class TemplateClassifier():
         
         
         coverage = coverage_error(y_trues, y_preds)
-        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        #mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
         #mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
 
-        roc_auc = roc_auc_score(y_trues, y_preds, average='weighted')
+        roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
 
         logging.info(
-            "mAP weighted Train: {:.3f}\tROC AUC weighted Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
-                mAP_weighted, roc_auc, coverage
+            "mAP micro Train: {:.3f}\tROC AUC micro Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
+                mAP_micro, roc_auc, coverage
                 )
             )
         
@@ -375,12 +375,12 @@ class TemplateClassifier():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
         coverage = coverage_error(y_trues, y_preds)
-        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        #mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
         #mAP_samples = average_precision_score(y_trues, y_preds, average='macro')
-        mAPs = mAP_weighted
+        mAPs = mAP_micro
 
-        roc_auc = roc_auc_score(y_trues, y_preds, average='weighted')
+        roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
 
         one_err = one_error(y_trues, y_preds)
         rank_loss = label_ranking_loss(y_trues, y_preds)
