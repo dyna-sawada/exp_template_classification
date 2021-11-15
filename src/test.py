@@ -36,6 +36,31 @@ from model import TorchTemplateClassifier
 
 
 
+a = [(0,1), (2,3), (4,5)]
+b = torch.tensor(a)
+print(b)
+
+c = [(0,1)]
+d = torch.tensor(c)
+print(d)
+
+print(b.unsqueeze(0).size())
+print(d.unsqueeze(0).size())
+
+e = torch.tensor(
+    [
+        [
+            [0, 1],
+            [2, 3],
+            [4, 5]
+        ],
+        [
+            [0, 1]
+        ]
+    ]
+)
+
+print(e)
 
 
 y_true = np.array(
