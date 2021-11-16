@@ -65,10 +65,11 @@ class DummyLR():
 
 
 class TorchTemplateClassifier(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, device):
         super(TorchTemplateClassifier, self).__init__()
 
         self.args = args
+        self.device = device
 
         if args.encoder == 'bert-large':
             MODEL_NAME = 'bert-large-cased'
@@ -94,12 +95,32 @@ class TorchTemplateClassifier(nn.Module):
 
 
 
-    def forward(self, input_ids, attention_mask):
+    def forward(self, input_ids, attention_mask, sp_token_positions):
         outputs = self.docenc(input_ids, attention_mask)
         
-        # get [CLS] embedding
-        cls_out = outputs.last_hidden_state
-        out = cls_out[:, 0, :]
+        ## get [CLS] embedding
+        all_emb = outputs.last_hidden_state
+        #out = all_emb[:, 0, :]
+        
+        ## get [FB] embedding
+        n_batch, _n_seq_length, n_hidden = all_emb.size()[0], all_emb.size()[1], all_emb.size()[2]
+        fb_outs = torch.empty(0, n_hidden).to(self.device)
+        for i, stp in enumerate(sp_token_positions):
+            fb_out = torch.empty(0, n_hidden).to(self.device)
+            
+            for s in stp:
+                if s[0] == 0 and s[1] == 0:
+                    break
+                fb_emb = all_emb[i, s[0]:s[1], :]
+                fb_out = torch.cat((fb_out, fb_emb), dim=0)
+            
+            fb_out = torch.mean(fb_out, 0)
+            fb_out = fb_out.unsqueeze(0)
+            fb_outs = torch.cat((fb_outs, fb_out), 0)
+        
+        assert fb_outs.size()[0] == n_batch
+        out = fb_outs
+
         out = self.fc1(out)
         out = self.relu(out)
         out = self.fc2(out)
@@ -112,7 +133,7 @@ class TemplateClassifier():
     def __init__(self, args, device):
         self.args = args
         self.device =device
-        self.classifier = TorchTemplateClassifier(self.args).to(self.device)
+        self.classifier = TorchTemplateClassifier(self.args, self.device).to(self.device)
 
         if args.encoder == 'bert-large':
             self.tok = AutoTokenizer.from_pretrained('bert-large-cased')
@@ -291,10 +312,10 @@ class TemplateClassifier():
         optimizer.zero_grad()
 
         for batch in tqdm(train_loader):
-            input_id, attention_mask, y_true = (d.to(self.device) for d in batch)
+            input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
 
             # Forward pass
-            y_pred = self.classifier(input_id, attention_mask)
+            y_pred = self.classifier(input_id, attention_mask, sp_token_position)
             loss = self.loss_fn(y_pred, y_true) / self.args.grad_accum
 
             y_preds.extend(y_pred.cpu().detach().numpy())
@@ -355,9 +376,9 @@ class TemplateClassifier():
         y_preds, y_trues = [], []
 
         for batch in tqdm(valid_loader):
-            input_id, attention_mask, y_true = (d.to(self.device) for d in batch)
+            input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
 
-            y_pred = self.classifier(input_id, attention_mask)
+            y_pred = self.classifier(input_id, attention_mask, sp_token_position)
             loss = self.loss_fn(y_pred, y_true)
 
             y_preds.extend(y_pred.cpu().detach().numpy())

@@ -6,6 +6,7 @@ import nltk
 
 import torch
 import torch.nn as nn
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import TensorDataset, random_split
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 
@@ -110,23 +111,21 @@ class TemplateIdsDataset(Dataset):
                 attention_mask = encoding['attention_mask']
                 
                 
-                """
+                
                 start_fb_positions = (input_id == sp_tokens_ids[-2]).nonzero(as_tuple=True)[1]
                 end_fb_positions = (input_id == sp_tokens_ids[-1]).nonzero(as_tuple=True)[1]
                 
                 #print(end_fb_positions.unsqueeze(0))
                 sp_token_position = torch.cat((start_fb_positions.unsqueeze(0), end_fb_positions.unsqueeze(0)), 0)
-
-                print(lo_id)
-                print(sp_token_position)
-                
-                sp_token_positions.append(sp_token_position)
-                """
+                sp_token_position = torch.t(sp_token_position)
+                #print(lo_id)
+                #print(sp_token_position)
                 
                 lo_ids.append(lo_id)
                 _lo_speeches.append(lo_speech)
                 input_ids.append(input_id)
                 attention_masks.append(attention_mask)
+                sp_token_positions.append(sp_token_position)
                 labels.append(label)
                 data_ids.append(data_id)
 
@@ -139,7 +138,7 @@ class TemplateIdsDataset(Dataset):
         input_ids = torch.cat(input_ids, dim=0)
         attention_masks = torch.cat(attention_masks, dim=0)
         labels = torch.FloatTensor(labels)
-        sp_token_positions = torch.tensor(sp_token_positions)
+        sp_token_positions = pad_sequence(sp_token_positions, batch_first=True, padding_value=0)
 
         return data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, sp_token_positions, labels
     

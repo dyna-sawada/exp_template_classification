@@ -75,8 +75,8 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
             
     logging.info("Config: {}".format(json.dumps(args.__dict__, indent=1)))
 
-    tr_vl_input_ids, tr_vl_attention_masks, tr_vl_labels, sub_lo_ids, tr_vl_data_ids, te_data_ids = \
-        tr_vl_dataset_info[0], tr_vl_dataset_info[1], tr_vl_dataset_info[2], tr_vl_dataset_info[3], tr_vl_dataset_info[4], tr_vl_dataset_info[5]
+    tr_vl_input_ids, tr_vl_attention_masks, tr_vl_sp_token_positions, tr_vl_labels, sub_lo_ids, tr_vl_data_ids, te_data_ids = \
+        tr_vl_dataset_info[0], tr_vl_dataset_info[1], tr_vl_dataset_info[2], tr_vl_dataset_info[3], tr_vl_dataset_info[4], tr_vl_dataset_info[5], tr_vl_dataset_info[6]
 
 
     fold_i = 0
@@ -86,9 +86,10 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
         tr_data_ids, vl_data_ids = tr_vl_data_ids[tr_index], tr_vl_data_ids[vl_index]
         tr_input_ids, vl_input_ids = tr_vl_input_ids[tr_index], tr_vl_input_ids[vl_index]
         tr_attention_masks, vl_attention_masks = tr_vl_attention_masks[tr_index], tr_vl_attention_masks[vl_index]
+        tr_sp_token_positions, vl_sp_token_positions = tr_vl_sp_token_positions[tr_index], tr_vl_sp_token_positions[vl_index]
         tr_labels, vl_labels = tr_vl_labels[tr_index], tr_vl_labels[vl_index]
-        tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_labels)
-        vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_labels)
+        tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_sp_token_positions, tr_labels)
+        vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_sp_token_positions, vl_labels)
 
         tr_dataloader = DataLoader(tr_dataset, args.batch_size, shuffle=True)
         vl_dataloader = DataLoader(vl_dataset, args.batch_size, shuffle=True)
@@ -142,9 +143,9 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
 
 def test(model, te_dataset_info, args, device, model_dir):
     ## Prepare and evaluate the model!
-    te_input_ids, te_attention_masks, te_labels = \
-        te_dataset_info[0], te_dataset_info[1], te_dataset_info[2]
-    te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_labels)
+    te_input_ids, te_attention_masks, te_sp_token_positions, te_labels = \
+        te_dataset_info[0], te_dataset_info[1], te_dataset_info[2], te_dataset_info[3]
+    te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_sp_token_positions, te_labels)
     test_dataloader = DataLoader(te_dataset, args.batch_size, shuffle=False)
 
     for fold_i in range(args.fold_size):
@@ -192,7 +193,7 @@ def main(args):
             MAX_SEQ_LEN
         )
 
-    data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, labels = \
+    data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, sp_token_positions, labels = \
         data_set.preprocess_dataset()
     
     #labels = labels.to('cpu').detach().numpy().copy()
@@ -204,6 +205,7 @@ def main(args):
     lo_ids = lo_ids[sort_ids]
     input_ids = input_ids[sort_ids]
     attention_masks = attention_masks[sort_ids]
+    sp_token_positions = sp_token_positions[sort_ids]
     labels = labels[sort_ids]
     
     iter_i = 0
@@ -218,11 +220,13 @@ def main(args):
         tr_vl_data_ids, te_data_ids = data_ids[tr_vl_index], data_ids[te_index]
         tr_vl_input_ids, te_input_ids = input_ids[tr_vl_index], input_ids[te_index]
         tr_vl_attention_masks, te_attention_masks = attention_masks[tr_vl_index], attention_masks[te_index]
+        tr_vl_sp_token_positions, te_sp_token_positions = sp_token_positions[tr_vl_index], sp_token_positions[te_index]
         tr_vl_labels, te_labels = labels[tr_vl_index], labels[te_index]
         sub_lo_ids = lo_ids[tr_vl_index]
         tr_vl_dataset_info = (
                                 tr_vl_input_ids,
                                 tr_vl_attention_masks,
+                                tr_vl_sp_token_positions,
                                 tr_vl_labels,
                                 sub_lo_ids,
                                 tr_vl_data_ids,
@@ -231,6 +235,7 @@ def main(args):
         te_dataset_info = (
                                 te_input_ids,
                                 te_attention_masks,
+                                te_sp_token_positions,
                                 te_labels
                             )
 

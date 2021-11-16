@@ -38,31 +38,75 @@ from model import TorchTemplateClassifier
 
 a = [(0,1), (2,3), (4,5)]
 b = torch.tensor(a)
-print(b)
+#print(b)
 
 c = [(0,1)]
 d = torch.tensor(c)
-print(d)
+#print(d)
 
-print(b.unsqueeze(0).size())
-print(d.unsqueeze(0).size())
+#print(b.unsqueeze(0).size())
+#print(d.unsqueeze(0).size())
 
-e = torch.tensor(
+n_batch = 2
+n_seq_length = 512
+n_hidden = 768
+
+e = torch.rand(n_batch, n_seq_length, n_hidden)
+print(e.size())
+cls_emb = e[:, 0, :]
+print(cls_emb)
+print(cls_emb.size())
+
+index_position = torch.tensor(
     [
         [
-            [0, 1],
-            [2, 3],
-            [4, 5]
+            [102, 110],
+            [150, 160],
+            [180, 190],
+            [0, 0],
+            [0, 0]
         ],
         [
-            [0, 1]
+            [99, 100],
+            [120, 135],
+            [160, 167],
+            [180, 188],
+            [0, 0]
         ]
     ]
 )
 
-print(e)
+print("---")
 
 
+fb_emb = torch.empty(0, n_hidden)
+
+for b, postions in enumerate(index_position):
+    fb_emb_ = torch.empty(0, n_hidden)
+    
+    for p in postions:
+        if p[0] == 0 and p[1] == 0:
+            break
+
+        emb = e[b, p[0]:p[1], :]
+        print(emb)
+        print(emb.size())
+        fb_emb_ = torch.cat((fb_emb_, emb), dim=0)
+
+    print(fb_emb_)
+    print(fb_emb_.size())
+    fb_emb_ = torch.mean(fb_emb_, 0)
+    fb_emb_ = fb_emb_.unsqueeze(0)
+    print(fb_emb_)
+    print(fb_emb_.size())
+    fb_emb = torch.cat((fb_emb, fb_emb_), 0)
+
+
+print(fb_emb)
+print(fb_emb.size())
+
+
+"""
 y_true = np.array(
                 [
                     [0,0,1,1],
@@ -78,13 +122,13 @@ y_pred = np.array(
                     [0.6, 0.4, 0.1, 0.4]
                 ]
                 )
-"""
+
 for y_t, y_p in zip(y_true, y_pred):
     pr, rc, th = precision_recall_curve(y_t, y_p)
     print(pr)
     print(rc)
     print(th)
-"""
+
 
 #y_true = torch.load('y_val_true_0_0.pt')
 #y_pred = torch.load('y_val_pred_0_0.pt')
@@ -105,7 +149,7 @@ print(roc_auc_score(y_true, y_pred, average='micro'))
 #print(auc)
 #lg_loss = log_loss(y_true, y_scores)
 #print(lg_loss)
-
+"""
 
 """
 sort_id = np.arange(3)
