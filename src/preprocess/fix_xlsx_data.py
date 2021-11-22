@@ -47,7 +47,7 @@ def embed_fix_data_lists(df_anno_motion: pd.DataFrame, fix_data_lists: list):
         eval_target = row[evaluation_target_column]
         lo_jp_speech = row[lo_jp_speech_column]
         fb_id = row[fb_id_column]
-        fb_reference = row[fb_reference_column]
+        fb_reference_pre = row[fb_reference_column]
         temp_id = row[temp_id_column]
         fb_comment = row[fb_comment_column]
         fb_comment_v2 = row[fb_comment_v2_column]
@@ -80,6 +80,19 @@ def embed_fix_data_lists(df_anno_motion: pd.DataFrame, fix_data_lists: list):
             y_c2 = ''
         if z == '*':
             z = ''
+
+        eval_target = eval_target.split('\n')
+        fb_reference_pre = [int(fr) if fr != "*" else fr for fr in fb_reference_pre.split(',')]
+        fb_reference = []
+        for i, evl_tgt in enumerate(eval_target):
+            #print(evl_tgt)
+            try:
+                evl_id = int(evl_tgt[0])
+                if evl_id in fb_reference_pre:
+                    fb_reference.append(str(i))
+            except:
+                continue
+        fb_reference = ', '.join(fb_reference)
 
         LO_ID, comp_id, judge_id = component_id2lo_id(component_id)
         lo_en_speech = speech_dict[LO_ID]['speech']
