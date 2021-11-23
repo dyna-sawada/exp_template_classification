@@ -34,8 +34,19 @@ from transformers import AutoTokenizer, BertModel, AdamW, get_linear_schedule_wi
 from model import TorchTemplateClassifier
 
 
+cls_dataset = torch.load('./out_test/datasets_cls.pt')
+fb_dataset = torch.load('./out_test/datasets_fb.pt')
+#print(cls_dataset[0][2])
+#print(fb_dataset[0][2])
+
+for i, (c, f) in enumerate(zip(cls_dataset, fb_dataset)):
+    input_ids = c[2] - f[2]
+    attention = c[3] - f[3]
+    assert torch.sum(input_ids) == 0
+    assert torch.sum(attention) == 0
 
 
+"""
 a = [(0,1), (2,3), (4,5)]
 b = torch.tensor(a)
 #print(b)
@@ -104,7 +115,7 @@ for b, postions in enumerate(index_position):
 
 print(fb_emb)
 print(fb_emb.size())
-
+"""
 
 """
 y_true = np.array(

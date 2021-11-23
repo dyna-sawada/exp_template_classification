@@ -41,6 +41,14 @@ def parse_args():
         '-enc-ft', '--encoder_finetune', action='store_false',
         help='Fine-tuning'
     )
+    parser.add_argument(
+        '-lsfn', '--loss_fn', default='focal_loss',
+        help='Loss function'
+    )
+    parser.add_argument(
+        '-enco', '--encoder_out', default='cls', choices=['cls', 'fb'],
+        help='Encoder out'
+    )
 
     parser.add_argument(
         '-it', '--iteration-size', default=5, type=int,
@@ -88,8 +96,13 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
         tr_attention_masks, vl_attention_masks = tr_vl_attention_masks[tr_index], tr_vl_attention_masks[vl_index]
         tr_sp_token_positions, vl_sp_token_positions = tr_vl_sp_token_positions[tr_index], tr_vl_sp_token_positions[vl_index]
         tr_labels, vl_labels = tr_vl_labels[tr_index], tr_vl_labels[vl_index]
-        tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_sp_token_positions, tr_labels)
-        vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_sp_token_positions, vl_labels)
+
+        if args.encoder_out == 'cls':
+            tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_labels)
+            vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_labels)
+        elif args.encoder_out == 'fb':
+            tr_dataset = TensorDataset(tr_input_ids, tr_attention_masks, tr_sp_token_positions, tr_labels)
+            vl_dataset = TensorDataset(vl_input_ids, vl_attention_masks, vl_sp_token_positions, vl_labels)
 
         tr_dataloader = DataLoader(tr_dataset, args.batch_size, shuffle=True)
         vl_dataloader = DataLoader(vl_dataset, args.batch_size, shuffle=True)
@@ -118,7 +131,7 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
                             }
                         }
 
-        assert len(tr_data_ids) + len(vl_data_ids) + len(te_data_ids) == 567
+        assert len(tr_data_ids) + len(vl_data_ids) + len(te_data_ids) == 659
 
         with open(os.path.join(model_dir, "data_split_fold_{}.json".format(fold_i)), "w") as f:
             json.dump(data_split_info, f, indent=2)
@@ -145,7 +158,12 @@ def test(model, te_dataset_info, args, device, model_dir):
     ## Prepare and evaluate the model!
     te_input_ids, te_attention_masks, te_sp_token_positions, te_labels = \
         te_dataset_info[0], te_dataset_info[1], te_dataset_info[2], te_dataset_info[3]
-    te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_sp_token_positions, te_labels)
+    
+    if args.encoder_out == 'cls':
+        te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_labels)
+    elif args.encoder_out == 'fb':
+        te_dataset = TensorDataset(te_input_ids, te_attention_masks, te_sp_token_positions, te_labels)
+    
     test_dataloader = DataLoader(te_dataset, args.batch_size, shuffle=False)
 
     for fold_i in range(args.fold_size):
@@ -188,6 +206,7 @@ def main(args):
 
     logging.info("Loading & Setting up Dataset...")
     data_set = TemplateIdsDataset(
+            args,
             temp_id_data,
             tokenizer,
             MAX_SEQ_LEN

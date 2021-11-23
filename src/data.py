@@ -7,7 +7,7 @@ import nltk
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import TensorDataset, random_split
+from torch.utils.data import TensorDataset, dataset, random_split
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
 
 #from transformers import BertTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup
@@ -17,8 +17,9 @@ from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampl
 
 class TemplateIdsDataset(Dataset):
     
-    def __init__(self, data: dict, tokenizer, max_token_len: int=510):
+    def __init__(self, args, data: dict, tokenizer, max_token_len: int=510):
         
+        self.args = args
         self.data = data
         self.tok = tokenizer
         self.max_token_len = max_token_len
@@ -57,14 +58,14 @@ class TemplateIdsDataset(Dataset):
                 
                 ## PM speech + LO speech + Reference texts
                 if ref_id == '*':
-                    lo_speech = '<FB> ' + lo_speech + ' </FB>'
+                    lo_speech = ' <FB> ' + lo_speech + ' </FB> '
                 else:
                     lo_texts = nltk.sent_tokenize(lo_speech)
                     lo_speech = ''
                     for i, lo_text in enumerate(lo_texts):
 
                         if i in ref_id:
-                            lo_text = ' <FB> ' + lo_text + ' </FB>'
+                            lo_text = ' <FB> ' + lo_text + ' </FB> '
                         else:
                             lo_text = lo_text
                         #print("{}\t{}\n".format(i, lo_text))
@@ -110,24 +111,21 @@ class TemplateIdsDataset(Dataset):
                 input_id = encoding['input_ids']
                 attention_mask = encoding['attention_mask']
                 
-                
-                
-                start_fb_positions = (input_id == sp_tokens_ids[-2]).nonzero(as_tuple=True)[1]
-                end_fb_positions = (input_id == sp_tokens_ids[-1]).nonzero(as_tuple=True)[1]
-                
-                #print(end_fb_positions.unsqueeze(0))
-                sp_token_position = torch.cat((start_fb_positions.unsqueeze(0), end_fb_positions.unsqueeze(0)), 0)
-                sp_token_position = torch.t(sp_token_position)
-                #print(lo_id)
-                #print(sp_token_position)
-                
                 lo_ids.append(lo_id)
                 _lo_speeches.append(lo_speech)
                 input_ids.append(input_id)
                 attention_masks.append(attention_mask)
-                sp_token_positions.append(sp_token_position)
                 labels.append(label)
                 data_ids.append(data_id)
+
+                if self.args.encoder_out == 'fb':
+                    start_fb_positions = (input_id == sp_tokens_ids[-2]).nonzero(as_tuple=True)[1]
+                    end_fb_positions = (input_id == sp_tokens_ids[-1]).nonzero(as_tuple=True)[1]
+                    #print(end_fb_positions.unsqueeze(0))
+                    sp_token_position = torch.cat((start_fb_positions.unsqueeze(0), end_fb_positions.unsqueeze(0)), 0)
+                    sp_token_position = torch.t(sp_token_position)
+
+                    sp_token_positions.append(sp_token_position)
 
 
                 data_id += 1
@@ -138,14 +136,32 @@ class TemplateIdsDataset(Dataset):
         input_ids = torch.cat(input_ids, dim=0)
         attention_masks = torch.cat(attention_masks, dim=0)
         labels = torch.FloatTensor(labels)
-        sp_token_positions = pad_sequence(sp_token_positions, batch_first=True, padding_value=0)
+        if self.args.encoder_out == 'fb':
+            sp_token_positions = pad_sequence(sp_token_positions, batch_first=True, padding_value=0)
+            print(sp_token_positions.size())
+        else:
+            sp_token_positions = torch.zeros(data_ids.size()[0], 7, 2)
+            print(sp_token_positions.size())
+
 
         return data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, sp_token_positions, labels
     
 
     def _make_tensor_dataset(self):
-        _lo_ids, _lo_speeches, input_ids, attention_masks, _sp_token_positions, labels = self.preprocess_dataset()
-
+        _data_ids, _lo_ids, _lo_speeches, input_ids, attention_masks, _sp_token_positions, labels = self.preprocess_dataset()
         dataset = TensorDataset(input_ids, attention_masks, labels)
         return dataset
 
+
+    def save_dataset(self):
+        data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, sp_token_positions, labels = \
+            self.preprocess_dataset()
+        
+        D = TensorDataset(data_ids, lo_ids, input_ids, attention_masks, sp_token_positions, labels)
+        torch.save(
+            D,
+            '{}/datasets_{}.pt'.format(
+                self.args.model_dir,
+                self.args.encoder_out
+            )
+        )

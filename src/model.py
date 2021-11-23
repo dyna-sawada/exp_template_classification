@@ -40,7 +40,7 @@ class FocalLoss(nn.Module):
         self._alpha = alpha
 
     def forward(self, y_pred, y_true):
-        cross_entropy_loss_fn = nn.BCELoss()
+        cross_entropy_loss_fn = nn.BCEWithLogitsLoss()
         cross_entropy_loss = cross_entropy_loss_fn(y_pred, y_true)
         p_t = ((y_true * y_pred) +
                ((1 - y_true) * (1 - y_pred)))
@@ -95,37 +95,43 @@ class TorchTemplateClassifier(nn.Module):
 
 
 
-    def forward(self, input_ids, attention_mask, sp_token_positions):
-        outputs = self.docenc(input_ids, attention_mask)
-        
-        ## get [CLS] embedding
+    def forward(self, input_id, attention_mask, *sp_token_positions):
+        outputs = self.docenc(input_id, attention_mask)
         all_emb = outputs.last_hidden_state
-        #out = all_emb[:, 0, :]
+        print(all_emb)
+        if self.args.encoder_out == 'cls':
+            ## get [CLS] embedding
+            out = all_emb[:, 0, :]
         
-        ## get [FB] embedding
-        n_batch, _n_seq_length, n_hidden = all_emb.size()[0], all_emb.size()[1], all_emb.size()[2]
-        fb_outs = torch.empty(0, n_hidden).to(self.device)
-        for i, stp in enumerate(sp_token_positions):
-            fb_out = torch.empty(0, n_hidden).to(self.device)
-            
-            for s in stp:
-                if s[0] == 0 and s[1] == 0:
-                    break
-                fb_emb = all_emb[i, s[0]:s[1], :]
-                fb_out = torch.cat((fb_out, fb_emb), dim=0)
-            
-            fb_out = torch.mean(fb_out, 0)
-            fb_out = fb_out.unsqueeze(0)
-            fb_outs = torch.cat((fb_outs, fb_out), 0)
+        elif self.args.encoder_out == 'fb':
+            ## get [FB] embedding
+            sp_token_positions = sp_token_positions[0]
+            n_batch, _n_seq_length, n_hidden = all_emb.size()[0], all_emb.size()[1], all_emb.size()[2]
+            fb_outs = torch.empty(0, n_hidden).to(self.device)
+            for i, stp in enumerate(sp_token_positions):
+                fb_out = torch.empty(0, n_hidden).to(self.device)
+                for s in stp:
+                    if s[0] == 0 and s[1] == 0:
+                        break
+                    fb_emb = all_emb[i, s[0]:s[1], :]
+                    fb_out = torch.cat((fb_out, fb_emb), dim=0)
+                    
+                    #print(all_emb[i, :, :])
+
+                fb_out = torch.mean(fb_out, 0)
+                fb_out = fb_out.unsqueeze(0)
+                fb_outs = torch.cat((fb_outs, fb_out), 0)
+                
         
-        assert fb_outs.size()[0] == n_batch
-        out = fb_outs
+            assert fb_outs.size()[0] == n_batch
+            out = fb_outs
 
         out = self.fc1(out)
         out = self.relu(out)
         out = self.fc2(out)
+        #out = self.sig(out)
 
-        return self.sig(out)
+        return out
 
 
 
@@ -149,8 +155,11 @@ class TemplateClassifier():
         self.tok.add_tokens(sp_tokens, special_tokens=True)
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
 
-        self.loss_fn = FocalLoss(gamma=2, alpha=None)
-        #self.loss_fn = nn.BCELoss()
+        if self.args.loss_fn == 'focal_loss':
+            self.loss_fn = FocalLoss(gamma=2, alpha=None)
+        elif self.args.loss_fn == 'BCE_loss':
+            self.loss_fn = nn.BCEWithLogitsLoss()
+        self.sig = nn.Sigmoid()
 
     
     @staticmethod
@@ -312,19 +321,22 @@ class TemplateClassifier():
         optimizer.zero_grad()
 
         for batch in tqdm(train_loader):
-            input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
+            if self.args.encoder_out == 'cls':
+                input_id, attention_mask, y_true = (d.to(self.device) for d in batch)
+                y_pred = self.classifier(input_id, attention_mask)
+            elif self.args.encoder_out == 'fb':
+                input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
+                y_pred = self.classifier(input_id, attention_mask, sp_token_position)
 
-            # Forward pass
-            y_pred = self.classifier(input_id, attention_mask, sp_token_position)
             loss = self.loss_fn(y_pred, y_true) / self.args.grad_accum
 
+            y_pred = self.sig(y_pred)
             y_preds.extend(y_pred.cpu().detach().numpy())
             y_trues.extend(y_true.cpu().detach().numpy())
 
             running_loss += [loss.item()]
             grad_accum_steps += 1
 
-            # Backward pass
             loss.backward()
 
             if grad_accum_steps % self.args.grad_accum == 0:
@@ -376,11 +388,16 @@ class TemplateClassifier():
         y_preds, y_trues = [], []
 
         for batch in tqdm(valid_loader):
-            input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
+            if self.args.encoder_out == 'cls':
+                input_id, attention_mask, y_true = (d.to(self.device) for d in batch)
+                y_pred = self.classifier(input_id, attention_mask)
+            elif self.args.encoder_out == 'fb':
+                input_id, attention_mask, sp_token_position, y_true = (d.to(self.device) for d in batch)
+                y_pred = self.classifier(input_id, attention_mask, sp_token_position)
 
-            y_pred = self.classifier(input_id, attention_mask, sp_token_position)
             loss = self.loss_fn(y_pred, y_true)
 
+            y_pred = self.sig(y_pred)
             y_preds.extend(y_pred.cpu().detach().numpy())
             y_trues.extend(y_true.cpu().detach().numpy())
 
