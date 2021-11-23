@@ -8,7 +8,7 @@ import argparse
 import torch
 import torch.nn as nn
 
-#from sklearn.metrics import recall_score, precision_score, f1_score
+from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
 from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
 
@@ -24,7 +24,10 @@ def one_error(y_true, y_pred):
             count += 1
 
     return count / len(y_pred)
-    
+
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
 
 def main(args):
@@ -72,9 +75,8 @@ def main(args):
             ##################
             ## Random Model ##
             ##################
-            y_pred_logits = torch.randn(n_batch, n_label)
-            y_pred_i = torch.sigmoid(y_pred_logits)
-            y_pred_i = y_pred_i.detach().numpy().copy()
+            y_pred_logits = np.random.randn(n_batch, n_label)
+            y_pred_i = sigmoid(y_pred_logits)
         
         elif args.baseline_model == 'majority':
             ####################
@@ -90,7 +92,6 @@ def main(args):
             ####################
             y_pred_i = np.exp(n_each_temp_id) / np.sum(np.exp(n_each_temp_id))
             y_pred_i = np.tile(y_pred_i, (n_batch, 1))
-            print(y_pred_i)
 
 
         loss = loss_fn(
@@ -108,9 +109,9 @@ def main(args):
         rank_loss = label_ranking_loss(y_true_i, y_pred_i)
         one_err = one_error(y_true_i, y_pred_i)
 
-        #y_pred_01 = np.where(y_pred >= 0.5, 1, 0)
-        #micro_f1 = f1_score(y_pred_01, y_true, average='micro')
-        #macro_f1 = f1_score(y_pred_01, y_true, average='macro')        
+        y_pred_01 = np.where(y_pred_i >= 0.5, 1, 0)
+        micro_f1 = f1_score(y_pred_01, y_true_i, average='micro', zero_division=0)
+        macro_f1 = f1_score(y_pred_01, y_true_i, average='macro', zero_division=0)
 
         print(
             'Iter: {}\tLoss: {:.3f}\t \
@@ -120,6 +121,13 @@ def main(args):
                 iter_i, loss, one_err, coverage, rank_loss, mAP_m, roc_auc
                 )
             )
+        print(
+            'F1 Micro: {:.3f}\tF1 Macro: {:.3f}'.format(
+                micro_f1, macro_f1
+                )
+            )
+
+        break
     
 
 

@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import json
 import numpy as np
-
+from sklearn.metrics import f1_score
 
 
 
@@ -13,14 +13,22 @@ param_info = json.load(open(param_info_file))
 n_fold = param_info['fold_size']
 n_iter = param_info['iteration_size']
 
-"""
+
 
 for i in range(n_iter):
     test_loss, test_one_err, test_coverage, test_rank_loss,\
          test_mAP_w, test_roc_auc = [], [], [], [], [], []
+    test_f1_micro, test_f1_macro = [], []
     for j in range(n_fold):
         test_result_file = './out_test/iter_{}/results_fold_{}.json'.format(i, j)
         test_result = json.load(open(test_result_file))
+        pred = test_result['prediction']
+        true = test_result['gold']
+
+        pred = np.where(np.array(pred) >= 0.5, 1, 0)
+        f1_micro = f1_score(y_pred=pred, y_true=true, average='micro', zero_division=0)
+        f1_macro = f1_score(y_pred=pred, y_true=true, average='macro', zero_division=0)
+
         loss = test_result['loss']
         one_err = test_result['one_error']
         coverage = test_result['coverage_error']
@@ -34,6 +42,8 @@ for i in range(n_iter):
         test_rank_loss.append(rank_loss)
         test_mAP_w.append(mAPs)
         test_roc_auc.append(roc_auc)
+        test_f1_micro.append(f1_micro)
+        test_f1_macro.append(f1_macro)
 
     print(
         'Iter: {}\tLoss: {:.3f}\t \
@@ -44,7 +54,14 @@ for i in range(n_iter):
             np.mean(rank_loss), np.mean(test_mAP_w), np.mean(test_roc_auc)
         )
     )
+    print(
+        'F1 Micro: {:.3f}\tF1 Macro: {:.3f}'.format(
+            np.mean(test_f1_micro), np.mean(test_f1_macro)
+        )
+    )
+
     break
+
 
 
 """
@@ -72,4 +89,4 @@ plt.plot(epoch, valid_losses, label="valid loss")
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 
 plt.show()
-
+"""
