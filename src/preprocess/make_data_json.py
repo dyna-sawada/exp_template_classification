@@ -116,6 +116,9 @@ def main():
         json.dump(tempid2position, f, ensure_ascii=False, indent=2)    
 
 
+
+
+    """
     temp_id_gold = {}
     for l in used_lo_ids:
         temp_id_gold[l] = { 
@@ -127,7 +130,7 @@ def main():
 
     temp_id_gold = embed_temp_id_gold(df_data, temp_id_gold, tempid2position)
 
-    """
+    
     ## テンプレート適用がないLOIDは削除
     non_list = []
     for lo_id, dic in temp_id_gold.items():
@@ -136,13 +139,13 @@ def main():
             non_list.append(lo_id)
     for i in non_list:
         temp_id_gold.pop(i, None)
-    """
+    
     
     
     #pprint.pprint(temp_id_gold, indent=2)
     with open('./work/temp_id_gold.json', mode='wt', encoding='utf=8')as f:
         json.dump(temp_id_gold, f, indent=2)
-    
+    """
 
 
 

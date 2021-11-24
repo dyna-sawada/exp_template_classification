@@ -131,7 +131,7 @@ def train(_model, tr_vl_dataset_info, args, device, model_dir):
                             }
                         }
 
-        assert len(tr_data_ids) + len(vl_data_ids) + len(te_data_ids) == 659
+        assert len(tr_data_ids) + len(vl_data_ids) + len(te_data_ids) == 762
 
         with open(os.path.join(model_dir, "data_split_fold_{}.json".format(fold_i)), "w") as f:
             json.dump(data_split_info, f, indent=2)
