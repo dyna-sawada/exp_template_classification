@@ -54,7 +54,15 @@ def main():
 
         for d_comments in diagnostic_comments:
             p_id = 0
+
             for _i in range(len(diagnostic_comments)):
+                is_valid = d_comments['template_annotation'][0]['is_valid']
+                is_understandable = d_comments['template_annotation'][0]['is_understandable']
+                is_not_duplicated = d_comments['template_annotation'][0]['is_not_duplicated']
+
+                if is_valid == False or is_understandable == False or is_not_duplicated == False:
+                    continue
+
                 temp_id = d_comments['template_annotation'][0]['template_number']
                 ref_id = d_comments['target_sent_idx']
 
