@@ -3,68 +3,77 @@
 
 import pandas as pd
 import numpy as np
+import json
 
 
 def main():
-    DATA_PATH = './data/テンプレートアノテーション_20211020_整形後.xlsx'
-    df_data = pd.read_excel(DATA_PATH)
-    lo_ids = sorted(
-                list(
-                    set(
-                        df_data['LO_ID'].tolist()
-                        )
-                    )
-                )
-
-    df_lo_group = df_data.groupby('LO_ID')
-
-    flag_list = [0] * len(df_data.index)
-
+    
+    DATA_PATH = './data/diagnostic_comments.json'
+    annotation_datas = json.load(open(DATA_PATH))
+    
+    flag_list = [0] * 1265
 
     count_all = 0
-    for lo_id in lo_ids:
-
-        df_l_g = df_lo_group.get_group(lo_id)
+    count_duplicated_all = 0
+    inc = 0
+    for lo_id, anno_data in annotation_datas.items():
+        #print(lo_id)
+        #print(anno_data)
+        diagnostic_comments = anno_data['diagnostic_comments']
+        target_sent_idx = [d_comment['target_sent_idx'] for d_comment in diagnostic_comments]
+        #print(target_sent_idx)
         
-        duplicated_df = df_l_g[df_l_g.duplicated(subset=['FB_REFERENCE_ID'], keep=False)]
+        indexes_2d = []
+        for t_s_idx in target_sent_idx:
+            indexes = [i for i, x in enumerate(target_sent_idx) if x == t_s_idx]
+            if len(indexes) >= 2:
+                indexes_2d.append(indexes)
+        
 
-        inds = duplicated_df.index.values
+        for i in range(len(indexes_2d)):
 
-        for i in range(len(inds)):
-
-            if i == len(inds) - 1:
+            if i == len(indexes_2d) - 1:
                 break
 
             j = i + 1
             
-            while j != len(inds):
-                ref_id_1 = duplicated_df.at[inds[i], 'FB_REFERENCE_ID']
-                ref_id_2 = duplicated_df.at[inds[j], 'FB_REFERENCE_ID']
+            while j != len(indexes_2d):
+                ref_id_1 = diagnostic_comments[i]['target_sent_idx']
+                ref_id_2 = diagnostic_comments[j]['target_sent_idx']
                 if ref_id_1 == ref_id_2:
-                    temp_id_1 = duplicated_df.at[inds[i], 'TEMPLATE_ID']
-                    temp_id_2 = duplicated_df.at[inds[j], 'TEMPLATE_ID']
+                    temp_id_1 = diagnostic_comments[i]['template_annotation'][0]['template_number']
+                    temp_id_2 = diagnostic_comments[j]['template_annotation'][0]['template_number']
             
+
                     #print(
                     #    "ind1:{}\tind2:{}\tref:{}\ttemp1:{}\ttemp2:{}".format(
                     #        i, j, ref_id_1, temp_id_1, temp_id_2
                     #        )
                     #    )
+                    
 
                     if temp_id_1 == temp_id_2:
-                        flag_list[inds[i]] = 1
-                        flag_list[inds[j]] = 1
+                        flag_list[i + inc] = 1
+                        flag_list[j + inc] = 1
 
                 j += 1
+            
+        inc += len(diagnostic_comments)
+            
+        
+        count_all += len(diagnostic_comments)
+        count_duplicated_all += len(indexes_2d)
 
-        count_all += len(inds)
-
-
-    #print(flag_list)
+        #print(indexes_2d)
+    
+    
     print(
-        "N: {}\tALL: {}\tRatio: {:.2f}".format(
-            sum(flag_list), count_all, sum(flag_list)/count_all * 100
+        "ALL: {}\tDuplicated: {}\tN: {}\tRatio: {:.2f}".format(
+            count_all, count_duplicated_all, sum(flag_list), sum(flag_list)/count_duplicated_all * 100
             )
         )
+
+
 
 
 if __name__ == '__main__':
