@@ -98,7 +98,7 @@ class TorchTemplateClassifier(nn.Module):
     def forward(self, input_id, attention_mask, *sp_token_positions):
         outputs = self.docenc(input_id, attention_mask)
         all_emb = outputs.last_hidden_state
-        print(all_emb)
+        
         if self.args.encoder_out == 'cls':
             ## get [CLS] embedding
             out = all_emb[:, 0, :]
@@ -159,7 +159,7 @@ class TemplateClassifier():
             self.loss_fn = FocalLoss(gamma=2, alpha=None)
         elif self.args.loss_fn == 'BCE_loss':
             self.loss_fn = nn.BCEWithLogitsLoss()
-        self.sig = nn.Sigmoid()
+        #self.sig = nn.Sigmoid()
 
     
     @staticmethod
@@ -330,7 +330,7 @@ class TemplateClassifier():
 
             loss = self.loss_fn(y_pred, y_true) / self.args.grad_accum
 
-            y_pred = self.sig(y_pred)
+            y_pred = torch.sigmoid(y_pred)
             y_preds.extend(y_pred.cpu().detach().numpy())
             y_trues.extend(y_true.cpu().detach().numpy())
 
@@ -397,7 +397,7 @@ class TemplateClassifier():
 
             loss = self.loss_fn(y_pred, y_true)
 
-            y_pred = self.sig(y_pred)
+            y_pred = torch.sigmoid(y_pred)
             y_preds.extend(y_pred.cpu().detach().numpy())
             y_trues.extend(y_true.cpu().detach().numpy())
 
