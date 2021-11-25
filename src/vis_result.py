@@ -48,8 +48,8 @@ for i in range(n_iter):
     print(
         'Iter: {}\tLoss: {:.3f}\t \
         OneError: {:.3f}\tCoverageLoss: {:.3f}\t \
-        RankingLoss: {:.3f}\tmAP weighted: {:.3f}\t \
-        ROC AUC weighted: {:.3f}'.format(
+        RankingLoss: {:.3f}\tmAP micro: {:.3f}\t \
+        ROC AUC micro: {:.3f}'.format(
             i, np.mean(test_loss), np.mean(test_one_err), np.mean(test_coverage),
             np.mean(rank_loss), np.mean(test_mAP_w), np.mean(test_roc_auc)
         )
@@ -74,6 +74,8 @@ valid_losses = result_data['val_losses']
 coverages = result_data['coverage_error']
 mAP = result_data['mAP']
 roc_auc = result_data['ROC_AUC']
+#f1_micro = result_data['f1_micro']
+#f1_macro = result_data['f1_macro']
 #print(train_losses, valid_losses, coverages)
 
 epoch = [e for e, _ in enumerate(train_losses)]
@@ -85,6 +87,8 @@ plt.plot(epoch, valid_losses, label="valid loss")
 #plt.plot(epoch, coverages, label="coverage")
 #plt.plot(epoch, mAP, label="mAP")
 #plt.plot(epoch, roc_auc, label="ROC_AUC")
+#plt.plot(epoch, f1_micro, label="f1_micro")
+#plt.plot(epoch, f1_macro, label="f1_macro")
 
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 

@@ -90,6 +90,7 @@ class TorchTemplateClassifier(nn.Module):
         #self.docenc = AutoModel.from_pretrained(MODEL_NAME)
         self.fc1 = nn.Linear(self.hDim, self.hDim)
         self.fc2 = nn.Linear(self.hDim, 25)
+        self.dropout = nn.Dropout(self.args.dropout)
         self.relu = nn.ReLU()
         self.sig = nn.Sigmoid()
 
@@ -126,6 +127,7 @@ class TorchTemplateClassifier(nn.Module):
             assert fb_outs.size()[0] == n_batch
             out = fb_outs
 
+        #out = self.dropout(out)
         out = self.fc1(out)
         out = self.relu(out)
         out = self.fc2(out)
@@ -219,7 +221,7 @@ class TemplateClassifier():
 
         best_val_mse, best_model = 9999, None
         train_losses, val_losses = [], []
-        _micro_f1s, _macro_f1s, mAPs, roc_aucs, coverages = [], [], [], [], []
+        _f1_micros, _f1_macros, mAPs, roc_aucs, coverages = [], [], [], [], []
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -258,15 +260,15 @@ class TemplateClassifier():
 
             """
             y_val_pred = np.where(y_val_pred >= 0.5, 1, 0)
-            micro_f1 = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='micro', zero_division=0)
-            macro_f1 = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='macro', zero_division=0)
+            f1_micro = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='micro', zero_division=0)
+            f1_macro = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='macro', zero_division=0)
             
-            micro_f1s.append(micro_f1)
-            macro_f1s.append(macro_f1)
+            f1_micros.append(f1_micro)
+            f1_macros.append(f1_macro)
 
             logging.info(
-                "Micro-F1. Valid: {:.3f}\tMacro-F1. Valid: {:.3f}\tCoverage Loss. Valid: {:.3f}".format(
-                    micro_f1, macro_f1, coverage
+                "Micro-F1. Valid: {:.3f}\tMacro-F1. Valid: {:.3f}".format(
+                    f1_micro, f1_macro
                     )
                 )
             """
@@ -287,8 +289,8 @@ class TemplateClassifier():
                 train_log = {
                     "train_losses": train_losses,
                     "val_losses": val_losses,
-                    #"micro_f1": micro_f1s,
-                    #"macro_f1": macro_f1s,
+                    #"f1_micro": f1_micros,
+                    #"f1_macro": f1_macros,
                     #"AUC": aucs,
                     "mAP": mAPs,
                     "ROC_AUC": roc_aucs,

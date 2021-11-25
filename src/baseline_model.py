@@ -35,8 +35,8 @@ def main(args):
     temp_id_gold = json.load(open(temp_id_gold_dir))
 
     params_dict = json.load(open('./out_test/params.json'))
-    loss_fn = FocalLoss(gamma=2, alpha=None)
-
+    #loss_fn = FocalLoss(gamma=2, alpha=None)
+    loss_fn = nn.BCELoss()
 
     y_true = [] 
     for _lo_id, lo_id_dict in temp_id_gold.items():
