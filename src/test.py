@@ -37,33 +37,35 @@ from model import TorchTemplateClassifier
 
 
 
-cls_dataset = torch.load('./out_test/datasets_cls.pt')
-fb_dataset = torch.load('./out_test/datasets_fb.pt')
+cls_dataloader = torch.load('./out_test/train_loader_cls.pt')
+fb_dataloader = torch.load('./out_test/train_loader_fb.pt')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 config = AutoConfig.from_pretrained('roberta-base')
 tok = AutoTokenizer.from_pretrained('roberta-base')
-docenc = AutoModel.from_config(config)
+docenc = AutoModel.from_pretrained('roberta-base')
 sp_tokens = ['<PM>', '</PM>', '<LO>', '</LO>', '<FB>', '</FB>']
 tok.add_tokens(sp_tokens, special_tokens=True)
 docenc.resize_token_embeddings(len(tok))
 docenc.to(device)
 
-cls_dataloader = DataLoader(cls_dataset, 2, shuffle=False)
-fb_dataloader = DataLoader(fb_dataset, 2, shuffle=False)
 
-for i, (c, f) in tqdm(enumerate(zip(cls_dataloader, fb_dataloader))):
-        
-    assert torch.equal(c[2], f[2])
-    assert torch.equal(c[3], f[3])
+for i, (c, f) in enumerate(zip(cls_dataloader, fb_dataloader)):
 
-    #print(c[2], c[3])
-    c_outputs = docenc(c[2].to(device), c[3].to(device))
-    f_outputs = docenc(f[2].to(device), f[3].to(device))
+    assert torch.equal(c[0], f[0])
+    assert torch.equal(c[1], f[1])
+    assert torch.equal(c[2], f[3])
+
+    c_outputs = docenc(c[0].to(device), c[1].to(device))
+    c_outputs_2 = docenc(c[0].to(device), c[1].to(device))
+    f_outputs = docenc(f[0].to(device), f[1].to(device))
     c_all_emb = c_outputs.last_hidden_state
+    c_all_emb_2 = c_outputs_2.last_hidden_state
     f_all_emb = f_outputs.last_hidden_state
     print(c_all_emb)
     print(f_all_emb)
+
+    assert torch.equal(c_all_emb, f_all_emb)
 
 
 """

@@ -322,6 +322,7 @@ class TemplateClassifier():
 
         optimizer.zero_grad()
 
+        #torch.save(train_loader, './out_test/train_loader_{}.pt'.format(self.args.encoder_out))
         for batch in tqdm(train_loader):
             if self.args.encoder_out == 'cls':
                 input_id, attention_mask, y_true = (d.to(self.device) for d in batch)
