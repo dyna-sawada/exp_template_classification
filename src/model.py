@@ -301,7 +301,7 @@ class TemplateClassifier():
                 json.dump(train_log, f, indent=2)
 
         if best_model is not None:
-            logging.info("Saving the best model to {}.".format(fn_save_to_dir))
+            logging.info("Saving the best model to {}/best_model_fold_{}.".format(fn_save_to_dir, fold_i))
             torch.save(
                     pickle.loads(best_model), 
                     os.path.join(fn_save_to_dir, "best_model_fold_{}.pt".format(fold_i))

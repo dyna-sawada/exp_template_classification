@@ -138,10 +138,10 @@ class TemplateIdsDataset(Dataset):
         labels = torch.FloatTensor(labels)
         if self.args.encoder_out == 'fb':
             sp_token_positions = pad_sequence(sp_token_positions, batch_first=True, padding_value=0)
-            print(sp_token_positions.size())
+            #print(sp_token_positions.size())
         else:
             sp_token_positions = torch.zeros(data_ids.size()[0], 7, 2)
-            print(sp_token_positions.size())
+            #print(sp_token_positions.size())
 
 
         return data_ids, lo_ids, _lo_speeches, input_ids, attention_masks, sp_token_positions, labels
