@@ -76,6 +76,10 @@ def parse_args():
         '-dr', '--dropout', default=0.1, type=float,
         help='Drop Out.'
     )
+    parser.add_argument(
+        '-gm', '--gamma', default=2, type=float,
+        help='Focal loss\'s parameter gamma.'
+    )
     
 
     return parser.parse_args()

@@ -166,7 +166,7 @@ class TemplateClassifier():
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
 
         if self.args.loss_fn == 'focal_loss':
-            self.loss_fn = FocalLoss(gamma=2, alpha=None)
+            self.loss_fn = FocalLoss(gamma=self.args.gamma, alpha=None)
         elif self.args.loss_fn == 'BCE_loss':
             self.loss_fn = nn.BCEWithLogitsLoss()
         #self.sig = nn.Sigmoid()
