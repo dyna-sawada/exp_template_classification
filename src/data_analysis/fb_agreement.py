@@ -27,14 +27,11 @@ def main():
 
         n_all += len(diagnostic_comments)
 
+    #print(n_all)
+    #print(in_appropriate_index)
 
-    print(n_all)
-    print(in_appropriate_index)
-
-    flag_list = [0] * n_all
-
-    
-    count_duplicated_all = 0
+    ref_temp_flag = [0] * n_all
+    ref_flag = [0] * n_all
     inc = 0
     for lo_id, anno_data in annotation_datas.items():
         #print(lo_id)
@@ -53,8 +50,7 @@ def main():
         if len(indexes_2d) < 1:
             inc += len(diagnostic_comments)
             continue
-
-        print(indexes_2d)
+        #print(indexes_2d)
 
         for indexes_dup in indexes_2d:
             for i, _index_dup in enumerate(indexes_dup):
@@ -64,39 +60,44 @@ def main():
                 
                 while j != len(indexes_dup):
 
-                    ref_id_1 = diagnostic_comments[i]['target_sent_idx']
-                    ref_id_2 = diagnostic_comments[j]['target_sent_idx']
+                    ref_id_1 = diagnostic_comments[indexes_dup[i]]['target_sent_idx']
+                    ref_id_2 = diagnostic_comments[indexes_dup[j]]['target_sent_idx']
                     
                     if ref_id_1 == ref_id_2:
-                        temp_id_1 = diagnostic_comments[i]['template_annotation'][0]['template_number']
-                        temp_id_2 = diagnostic_comments[j]['template_annotation'][0]['template_number']
+                        temp_id_1 = diagnostic_comments[indexes_dup[i]]['template_annotation'][0]['template_number']
+                        temp_id_2 = diagnostic_comments[indexes_dup[j]]['template_annotation'][0]['template_number']
 
-                        print(
-                            "ind1:{}\tind2:{}\tref:{}\ttemp1:{}\ttemp2:{}".format(
-                                i, j, ref_id_1, temp_id_1, temp_id_2
-                                )
-                            )
+                        #print(
+                        #    "lo_id:{}\tdup:{}\tind1:{}\tind2:{}\tref:{}\ttemp1:{}\ttemp2:{}".format(
+                        #        lo_id, indexes_dup, indexes_dup[i], indexes_dup[j], ref_id_1, temp_id_1, temp_id_2
+                        #        )
+                        #    )
 
                         if temp_id_1 == temp_id_2:
-                            flag_list[i + inc] = 1
-                            flag_list[j + inc] = 1
+                            ref_temp_flag[i + inc] = 1
+                            ref_temp_flag[j + inc] = 1
+
+                        ref_flag[i + inc] = 1
+                        ref_flag[j + inc] = 1
+                    
                     j += 1
         
         inc += len(diagnostic_comments)
 
-        count_duplicated_all += len(indexes_2d)
 
-        #print(indexes_2d)
     for i_a_ind in in_appropriate_index:
-        flag_list[i_a_ind] = 0
-    print(flag_list)
+        ref_temp_flag[i_a_ind] = 0
+        ref_flag[i_a_ind] = 0
+    #print(ref_temp_flag)
+    #print(ref_flag)
 
-    count_duplicated_all = count_duplicated_all - len(in_appropriate_index)
+    n_ref_temp_duplicated = sum(ref_temp_flag)
+    n_ref_duplicated = sum(ref_flag)
     n_all = n_all - len(in_appropriate_index)
     
     print(
         "ALL: {}\tDuplicated: {}\tN: {}\tRatio: {:.2f}".format(
-            n_all, count_duplicated_all, sum(flag_list), sum(flag_list)/count_duplicated_all * 100
+            n_all, n_ref_duplicated, n_ref_temp_duplicated, n_ref_temp_duplicated/n_ref_duplicated * 100
             )
         )
     
