@@ -3,3 +3,4 @@ __pycache__
 out_test/
 trash/
 memory/
+src/test.py

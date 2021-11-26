@@ -2,6 +2,7 @@
 
 import argparse
 from os import openpty
+import nltk
 from numpy.lib.function_base import average
 import pandas as pd
 import numpy as np
@@ -37,6 +38,81 @@ from model import TorchTemplateClassifier
 
 
 
+"""
+a = "They said that the death penalty is inhumane because it requires a person to kill another person. However, technically speaking, executions do not need to be carried out by human beings. It is quite possible to devise a method of execution that is fully automated, so no person has to deliver the deadly punishment directly. Even if there were something in the current legal code that would prevent such an automated execution, there is no reason that the law surrounding capital punishment couldn't be rewritten to keep up with technology. Although executions at this time are still carried out using human executioners, methods are already put in place to prevent the perception that one particular person has put another to death. For instance, multiple prison officials simultaneously pull multiple levers, not knowing which lever results in the delivery of an electrical charge, in the case of death by electrocution. Thus, the death penalty can't be said to be inhumane for the stated reason."
+b = nltk.sent_tokenize(a)
+print(b)
+c = {
+      "adus": {
+        "adu0": {
+          "adu_type": '',
+          "sent_idx": [
+            0
+          ]
+        },
+        "adu1": {
+          "adu_type": "Claim",
+          "sent_idx": [
+            1
+          ]
+        },
+        "adu2": {
+          "adu_type": "Premise",
+          "sent_idx": [
+            2,
+            3
+          ]
+        },
+        "adu3": {
+          "adu_type": "Premise",
+          "sent_idx": [
+            4
+          ]
+        },
+        "adu4": {
+          "adu_type": "Example",
+          "sent_idx": [
+            5
+          ]
+        },
+        "adu5": {
+          "adu_type": "Stance",
+          "sent_idx": [
+            6
+          ]
+        }
+      }
+    }
+
+ref_id = [0,1]
+ref_info_list = [0] * len(b)
+for r_id in ref_id:
+    ref_info_list[r_id] = 1
+print(ref_info_list)
+
+adu_info_list = [''] * len(b)
+for d in c['adus'].values():
+    adu_type = d['adu_type']
+    sent_idx = d['sent_idx']
+    for s_idx in sent_idx:
+        adu_info_list[s_idx] = adu_type
+print(adu_info_list)
+
+for i, _sent in enumerate(b):
+    if adu_info_list[i] == 'Claim':
+        b[i] = '</CLAIM>' + b[i] + ' </CLAIM>'
+print(b)
+
+x = b
+for i, _sent in enumerate(b):
+    if ref_info_list[i] == 1:
+        x[i] = 'hoge' + b[i] + '/hoge'
+print(x)
+
+
+"""
+
+"""
 cls_dataloader = torch.load('./out_test/train_loader_cls.pt')
 fb_dataloader = torch.load('./out_test/train_loader_fb.pt')
 
@@ -66,7 +142,7 @@ for i, (c, f) in enumerate(zip(cls_dataloader, fb_dataloader)):
     print(f_all_emb)
 
     assert torch.equal(c_all_emb, f_all_emb)
-
+"""
 
 """
 a = [(0,1), (2,3), (4,5)]

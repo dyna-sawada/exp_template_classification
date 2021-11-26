@@ -49,6 +49,10 @@ def parse_args():
         '-enco', '--encoder_out', default='cls', choices=['cls', 'fb'],
         help='Encoder out'
     )
+    parser.add_argument(
+        '-argms', '--argument_structure', action='store_false',
+        help='With Argument structure.'
+    )
 
     parser.add_argument(
         '-it', '--iteration-size', default=5, type=int,
