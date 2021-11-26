@@ -153,7 +153,15 @@ class TemplateClassifier():
             self.tok = AutoTokenizer.from_pretrained('roberta-base')
         
         ## add new tokens to pre-trained model.
-        sp_tokens = ['<PM>', '</PM>', '<LO>', '</LO>', '<FB>', '</FB>']
+        sp_tokens = [
+                '<PM>', '</PM>',
+                '<LO>', '</LO>',
+                '<FB>', '</FB>',
+                '<CLAIM>', '<CLAIM>',
+                '<PREMISE>', '</PREMISE>',
+                '<EXAMPLE>', '</EXAMPLE>',
+                '<STANCE>', '</STANCE>'
+            ]
         self.tok.add_tokens(sp_tokens, special_tokens=True)
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
 
