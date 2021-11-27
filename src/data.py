@@ -45,10 +45,10 @@ class TemplateIdsDataset(Dataset):
                         '<PM>', '</PM>',
                         '<LO>', '</LO>',
                         '<FB>', '</FB>',
-                        '<CLAIM>', '<CLAIM>',
-                        '<PREMISE>', '</PREMISE>',
-                        '<EXAMPLE>', '</EXAMPLE>',
-                        '<STANCE>', '</STANCE>'
+                        '<CLAIM>',
+                        '<PREMISE>',
+                        '<EXAMPLE>',
+                        '<STANCE>'
                     ]
 
         self.tok.add_tokens(sp_tokens, special_tokens=True)
@@ -79,13 +79,13 @@ class TemplateIdsDataset(Dataset):
 
                 for lo_txt_id in range(len_lo_speech):
                     if adu_info_list[lo_txt_id] == 'Claim':
-                        lo_texts[lo_txt_id] = ' <CLAIM> ' + lo_texts[lo_txt_id] + ' </CLAIM> '
+                        lo_texts[lo_txt_id] = ' <CLAIM> ' + lo_texts[lo_txt_id]
                     elif adu_info_list[lo_txt_id] == 'Premise':
-                        lo_texts[lo_txt_id] = ' <PREMISE> ' + lo_texts[lo_txt_id] + ' </PREMISE> '
+                        lo_texts[lo_txt_id] = ' <PREMISE> ' + lo_texts[lo_txt_id]
                     elif adu_info_list[lo_txt_id] == 'Example':
-                        lo_texts[lo_txt_id] = ' <EXAMPLE> ' + lo_texts[lo_txt_id] + ' </EXAMPLE> '
+                        lo_texts[lo_txt_id] = ' <EXAMPLE> ' + lo_texts[lo_txt_id]
                     elif adu_info_list[lo_txt_id] == 'Stance':
-                        lo_texts[lo_txt_id] = ' <STANCE> ' + lo_texts[lo_txt_id] + ' </STANCE> '
+                        lo_texts[lo_txt_id] = ' <STANCE> ' + lo_texts[lo_txt_id]
                 
             
             for temp_data_dict in lo_id_dict['temp_data'].values():

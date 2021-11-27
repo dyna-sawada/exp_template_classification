@@ -157,10 +157,10 @@ class TemplateClassifier():
                 '<PM>', '</PM>',
                 '<LO>', '</LO>',
                 '<FB>', '</FB>',
-                '<CLAIM>', '<CLAIM>',
-                '<PREMISE>', '</PREMISE>',
-                '<EXAMPLE>', '</EXAMPLE>',
-                '<STANCE>', '</STANCE>'
+                '<CLAIM>',
+                '<PREMISE>',
+                '<EXAMPLE>',
+                '<STANCE>'
             ]
         self.tok.add_tokens(sp_tokens, special_tokens=True)
         self.classifier.docenc.resize_token_embeddings(len(self.tok))
