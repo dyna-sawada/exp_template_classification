@@ -34,12 +34,14 @@ def one_error(y_true, y_pred):
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, gamma=2, alpha=0.25):
+    def __init__(self, gamma=2, alpha=1):
         super(FocalLoss, self).__init__()
         self._gamma = gamma
         self._alpha = alpha
 
     def forward(self, y_pred, y_true):
+        """
+        ## version1.0
         cross_entropy_loss_fn = nn.BCEWithLogitsLoss()
         cross_entropy_loss = cross_entropy_loss_fn(y_pred, y_true)
         p_t = ((y_true * y_pred) +
@@ -53,7 +55,18 @@ class FocalLoss(nn.Module):
                                    (1 - y_true) * (1 - self._alpha))
         focal_cross_entropy_loss = (modulating_factor * alpha_weight_factor *
                                     cross_entropy_loss)
-        return focal_cross_entropy_loss.mean()
+        focal_cross_entropy_loss = focal_cross_entropy_loss.mean()
+        """
+        ## version2.0
+        l = y_pred.reshape(-1)
+        t = y_true.reshape(-1)
+        p = torch.sigmoid(l)
+        p = torch.where(t >= 0.5, p, 1-p)
+        logp = - torch.log(torch.clamp(p, 1e-4, 1-1e-4))
+        focal_cross_entropy_loss = logp * ((1-p)**self._gamma)
+        focal_cross_entropy_loss = 25*focal_cross_entropy_loss.mean()
+        
+        return focal_cross_entropy_loss
 
 
 class DummyLR():
@@ -230,6 +243,7 @@ class TemplateClassifier():
         best_val_mse, best_model = 9999, None
         train_losses, val_losses = [], []
         _f1_micros, _f1_macros, mAPs, roc_aucs, coverages = [], [], [], [], []
+        y_val_preds, y_val_trues = [], []
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -245,6 +259,8 @@ class TemplateClassifier():
 
             train_losses.append(train_loss)
             val_losses.append(val_loss)
+            y_val_preds.append(y_val_pred.tolist())
+            y_val_trues.append(y_val_true.tolist())
 
             logging.info("Loss Train: {:.3f} Valid: {:.3f}".format(train_loss, val_loss))
 
@@ -252,17 +268,17 @@ class TemplateClassifier():
             coverage = coverage_error(y_val_true, y_val_pred)
             coverages.append(coverage)
 
-            mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
-            #mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
+            #mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
+            mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
             #mAP_samples = average_precision_score(y_val_true, y_val_pred, average='samples')
-            mAPs.append(mAP_micro)
+            mAPs.append(mAP_weigthed)
 
-            roc_auc = roc_auc_score(y_val_true, y_val_pred, average='micro')
-            roc_aucs.append(roc_auc)
+            #roc_auc = roc_auc_score(y_val_true, y_val_pred, average='micro')
+            #roc_aucs.append(roc_auc)
 
             logging.info(
-                "mAP micro Valid: {:.3f}\tROC AUC micro Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
-                    mAP_micro, roc_auc, coverage
+                "mAP weighted Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
+                    mAP_weigthed, coverage
                     )
                 )
 
@@ -295,13 +311,15 @@ class TemplateClassifier():
                                 ) as f:
 
                 train_log = {
+                    "prediction": y_val_preds,
+                    "gold": y_val_trues,
                     "train_losses": train_losses,
                     "val_losses": val_losses,
                     #"f1_micro": f1_micros,
                     #"f1_macro": f1_macros,
                     #"AUC": aucs,
                     "mAP": mAPs,
-                    "ROC_AUC": roc_aucs,
+                    #"ROC_AUC": roc_aucs,
                     "coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
@@ -362,15 +380,15 @@ class TemplateClassifier():
         
         
         coverage = coverage_error(y_trues, y_preds)
-        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        #mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
         #mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
 
-        roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
+        #roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
 
         logging.info(
-            "mAP micro Train: {:.3f}\tROC AUC micro Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
-                mAP_micro, roc_auc, coverage
+            "mAP weighted Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
+                mAP_weighted, coverage
                 )
             )
         
@@ -424,12 +442,12 @@ class TemplateClassifier():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
         coverage = coverage_error(y_trues, y_preds)
-        mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        #mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
+        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
+        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
         #mAP_samples = average_precision_score(y_trues, y_preds, average='macro')
-        mAPs = mAP_micro
+        mAPs = mAP_weighted
 
-        roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
+        #roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
 
         one_err = one_error(y_trues, y_preds)
         rank_loss = label_ranking_loss(y_trues, y_preds)
@@ -451,7 +469,7 @@ class TemplateClassifier():
             "coverage_error": coverage,
             "rank_loss": rank_loss,
             "mAP": mAPs,
-            "ROC_AUC": roc_auc
+            #"ROC_AUC": roc_auc
         }
 
         print(result_log)
