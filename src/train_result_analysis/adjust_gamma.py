@@ -79,7 +79,7 @@ plt.plot(probs[2], losses[2], label='gamma={}'.format(gamma_list[2]))
 plt.plot(probs[3], losses[3], label='gamma={}'.format(gamma_list[3]))
 plt.plot(probs[4], losses[4], label='gamma={}'.format(gamma_list[4]))
 
-plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
+plt.legend(bbox_to_anchor=(0, 1), loc='upper left', borderaxespad=1, fontsize=12)
 plt.show()
 """
 
