@@ -94,3 +94,36 @@ plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=1
 
 plt.show()
 
+
+
+
+
+
+"""
+print(np.sum(y_trues, axis=0))
+flag_compute = np.sum(y_trues, axis=0) > 0
+print(flag_compute)
+
+y_preds = y_preds[:, flag_compute]
+y_trues = y_trues[:, flag_compute]
+#print(y_preds.shape)
+
+roc_scores = roc_auc_score(y_trues, y_preds, average=None)
+roc_average = roc_auc_score(y_trues, y_preds, average='macro')
+pr_scores = average_precision_score(y_trues, y_preds, average=None)
+pr_average = average_precision_score(y_trues, y_preds, average='macro')
+
+for idx, flag in enumerate(flag_compute):
+    if flag == False:
+        roc_scores = np.insert(roc_scores, idx, np.nan)
+        pr_scores = np.insert(pr_scores, idx, np.nan)
+
+assert len(roc_scores) == 25
+assert len(pr_scores) == 25
+
+print(roc_scores)
+print(roc_average)
+print(pr_scores)
+print(pr_average)
+
+"""
