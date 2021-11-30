@@ -65,15 +65,15 @@ for i in range(n_iter):
 
 
 """
-result_file = './out_test_gm=5/iter_0/train_log_fold_0.json'
+result_file = './out_test/iter_0/train_log_fold_0.json'
 
 result_data = json.load(open(result_file))
 
 train_losses = result_data['train_losses']
 valid_losses = result_data['val_losses']
-coverages = result_data['coverage_error']
-mAP = result_data['mAP']
-#roc_auc = result_data['ROC_AUC']
+pr_averages = result_data['pr_averages']
+roc_averages = result_data['roc_averages']
+
 #f1_micro = result_data['f1_micro']
 #f1_macro = result_data['f1_macro']
 #print(train_losses, valid_losses, coverages)
@@ -84,13 +84,14 @@ print(len(epoch))
 
 plt.plot(epoch, train_losses, label="train loss")
 plt.plot(epoch, valid_losses, label="valid loss")
-#plt.plot(epoch, coverages, label="coverage")
-#plt.plot(epoch, mAP, label="mAP")
-#plt.plot(epoch, roc_auc, label="ROC_AUC")
-#plt.plot(epoch, f1_micro, label="f1_micro")
-#plt.plot(epoch, f1_macro, label="f1_macro")
-
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
-
 plt.show()
 
+plt.plot(valid_losses, pr_averages, label="mAP")
+plt.show()
+
+plt.plot(valid_losses, roc_averages, label="ROC_AUC")
+plt.show()
+
+#plt.plot(epoch, f1_micro, label="f1_micro")
+#plt.plot(epoch, f1_macro, label="f1_macro")
