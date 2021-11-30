@@ -67,7 +67,7 @@ def parse_args():
         '-bs', '--batch-size', default=2, type=int,
         help="Training batch size.")
     parser.add_argument(
-        '-lr', '--learning-rate', default=5e-6, type=float,
+        '-lr', '--learning-rate', default=5e-5, type=float,
         help="Learning rate.")
     parser.add_argument(
         '-ga', '--grad-accum', default=16, type=int,

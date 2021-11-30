@@ -407,11 +407,11 @@ class TemplateClassifier():
         pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='weighted')
         roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='weighted')
         pr_result = {
-            "scores": pr_scores,
+            "scores": pr_scores.tolist(),
             "average": pr_average
         }
         roc_result = {
-            "scores": roc_scores,
+            "scores": roc_scores.tolist(),
             "average": roc_average
         }
 
