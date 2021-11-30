@@ -42,7 +42,7 @@ def parse_args():
         help='Fine-tuning'
     )
     parser.add_argument(
-        '-lsfn', '--loss_fn', default='focal_loss',
+        '-lsfn', '--loss_fn', default='BCE_loss', choices=['BCE_loss', 'focal_loss'],
         help='Loss function'
     )
     parser.add_argument(
