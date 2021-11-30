@@ -261,8 +261,8 @@ class TemplateClassifier():
             #coverage = coverage_score(y_val_true, y_val_pred)
             #coverages.append(coverage)
 
-            _pr_scores, pr_average = PR_AUC_score(y_val_true, y_val_pred, average='macro')
-            _roc_scores, roc_average = ROC_AUC_score(y_val_true, y_val_pred, average='macro')
+            _pr_scores, pr_average = PR_AUC_score(y_val_true, y_val_pred, average='weighted')
+            _roc_scores, roc_average = ROC_AUC_score(y_val_true, y_val_pred, average='weighted')
             
             pr_averages.append(pr_average)
             roc_averages.append(roc_average)
@@ -358,8 +358,8 @@ class TemplateClassifier():
         
         
         #coverage = coverage_score(y_trues, y_preds)
-        _pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='macro')
-        _roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='macro')
+        _pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='weighted')
+        _roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='weighted')
 
         logging.info(
             "Train\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
@@ -404,8 +404,8 @@ class TemplateClassifier():
         with torch.no_grad():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
-        pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='macro')
-        roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='macro')
+        pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='weighted')
+        roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='weighted')
         pr_result = {
             "scores": pr_scores,
             "average": pr_average
