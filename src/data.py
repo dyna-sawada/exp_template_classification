@@ -160,8 +160,8 @@ class TemplateIdsDataset(Dataset):
 
 
                 if self.args.encoder_out == 'fb':
-                    start_fb_positions = (input_id == sp_tokens_ids[-2]).nonzero(as_tuple=True)[1]
-                    end_fb_positions = (input_id == sp_tokens_ids[-1]).nonzero(as_tuple=True)[1]
+                    start_fb_positions = (input_id == sp_tokens_ids[4]).nonzero(as_tuple=True)[1]
+                    end_fb_positions = (input_id == sp_tokens_ids[5]).nonzero(as_tuple=True)[1]
                     
                     sp_token_position = torch.cat((start_fb_positions.unsqueeze(0), end_fb_positions.unsqueeze(0)), 0)
                     sp_token_position = torch.t(sp_token_position)
