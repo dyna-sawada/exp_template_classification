@@ -11,7 +11,10 @@ import numpy as np
 
 #from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
-from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
+#from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
+from evaluation_metrics import f1_threshold_score
+from evaluation_metrics import PR_AUC_score, ROC_AUC_score
+from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
 
 import torch
 import torch.nn as nn
@@ -20,17 +23,6 @@ import torch.nn.functional as F
 
 from transformers import AutoConfig, AutoModel, AutoTokenizer, AdamW, get_linear_schedule_with_warmup
 
-
-
-
-def one_error(y_true, y_pred):
-    count = 0
-    for y_p, y_t in zip(y_pred, y_true):
-        top_cls = np.argmax(y_p)
-        if y_t[top_cls] != 1:
-            count += 1
-
-    return count / len(y_pred)
 
 
 class FocalLoss(nn.Module):
@@ -242,8 +234,9 @@ class TemplateClassifier():
 
         best_val_mse, best_model = 9999, None
         train_losses, val_losses = [], []
-        _f1_micros, _f1_macros, mAPs, roc_aucs, coverages = [], [], [], [], []
         y_val_preds, y_val_trues = [], []
+        #_f1_micros, _f1_macros, coverages = [], [], []
+        pr_averages, roc_averages = [], []
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -265,37 +258,22 @@ class TemplateClassifier():
             logging.info("Loss Train: {:.3f} Valid: {:.3f}".format(train_loss, val_loss))
 
 
-            coverage = coverage_error(y_val_true, y_val_pred)
-            coverages.append(coverage)
+            #coverage = coverage_score(y_val_true, y_val_pred)
+            #coverages.append(coverage)
 
-            #mAP_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
-            mAP_weigthed = average_precision_score(y_val_true, y_val_pred, average='weighted')
-            #mAP_samples = average_precision_score(y_val_true, y_val_pred, average='samples')
-            mAPs.append(mAP_weigthed)
-
-            #roc_auc = roc_auc_score(y_val_true, y_val_pred, average='micro')
-            #roc_aucs.append(roc_auc)
-
-            logging.info(
-                "mAP weighted Valid: {:.3f}\tCoverage Loss Valid: {:.3f}".format(
-                    mAP_weigthed, coverage
-                    )
-                )
-
-            """
-            y_val_pred = np.where(y_val_pred >= 0.5, 1, 0)
-            f1_micro = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='micro', zero_division=0)
-            f1_macro = f1_score(y_pred=y_val_pred, y_true=y_val_true, average='macro', zero_division=0)
+            _pr_scores, pr_average = PR_AUC_score(y_val_true, y_val_pred, average='macro')
+            _roc_scores, roc_average = ROC_AUC_score(y_val_true, y_val_pred, average='macro')
             
-            f1_micros.append(f1_micro)
-            f1_macros.append(f1_macro)
+            pr_averages.append(pr_average)
+            roc_averages.append(roc_average)
+
 
             logging.info(
-                "Micro-F1. Valid: {:.3f}\tMacro-F1. Valid: {:.3f}".format(
-                    f1_micro, f1_macro
+                "Valid\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
+                    pr_average, roc_average
                     )
                 )
-            """
+
 
             if best_val_mse > val_loss:
                 logging.info("Best validation loss!")
@@ -317,12 +295,12 @@ class TemplateClassifier():
                     "val_losses": val_losses,
                     #"f1_micro": f1_micros,
                     #"f1_macro": f1_macros,
-                    #"AUC": aucs,
-                    "mAP": mAPs,
-                    #"ROC_AUC": roc_aucs,
-                    "coverage_error": coverages
+                    "pr_averages": pr_averages,
+                    "roc_averages": roc_averages
+                    #"coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
+
                 logging.info("Updating train log file.")
                 json.dump(train_log, f, indent=2)
 
@@ -379,31 +357,16 @@ class TemplateClassifier():
         logging.info("Target sample:\n{}".format(y_trues.astype(np.int)))
         
         
-        coverage = coverage_error(y_trues, y_preds)
-        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
-        #mAP_samples = average_precision_score(y_trues, y_preds, average='samples')
-
-        #roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
+        #coverage = coverage_score(y_trues, y_preds)
+        _pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='macro')
+        _roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='macro')
 
         logging.info(
-            "mAP weighted Train: {:.3f}\tCoverage Loss Train: {:.3f}".format(
-                mAP_weighted, coverage
+            "Train\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
+                pr_average, roc_average
                 )
             )
         
-        """
-        y_preds = np.where(y_preds >= 0.5, 1, 0)
-
-        #logging.info("Acc. Train: {}".format(accuracy_score(y_trues, y_preds)))
-        micro_f1_train = f1_score(y_pred=y_preds, y_true=y_trues, average='micro', zero_division=0)
-        macro_f1_train = f1_score(y_pred=y_preds, y_true=y_trues, average='macro', zero_division=0)
-        logging.info(
-            "Micro-F1. Train: {:.3f}\tMacro-F1. Train: {:.3f}\tCoverage Loss. Train: {:.3f}".format(
-                micro_f1_train, macro_f1_train, coverage
-                )
-            )
-        """
 
         return np.mean(running_loss)
 
@@ -441,22 +404,20 @@ class TemplateClassifier():
         with torch.no_grad():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
-        coverage = coverage_error(y_trues, y_preds)
-        #mAP_micro = average_precision_score(y_trues, y_preds, average='micro')
-        mAP_weighted = average_precision_score(y_trues, y_preds, average='weighted')
-        #mAP_samples = average_precision_score(y_trues, y_preds, average='macro')
-        mAPs = mAP_weighted
+        pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='macro')
+        roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='macro')
+        pr_result = {
+            "scores": pr_scores,
+            "average": pr_average
+        }
+        roc_result = {
+            "scores": roc_scores,
+            "average": roc_average
+        }
 
-        #roc_auc = roc_auc_score(y_trues, y_preds, average='micro')
-
-        one_err = one_error(y_trues, y_preds)
-        rank_loss = label_ranking_loss(y_trues, y_preds)
-
-        """
-        y_preds_01 = np.where(y_preds >= 0.5, 1, 0)
-        micro_f1 = f1_score(y_pred=y_preds_01, y_true=y_trues, average='micro', zero_division=0)
-        macro_f1 = f1_score(y_pred=y_preds_01, y_true=y_trues, average='macro', zero_division=0)
-        """
+        _one_err_scores, one_err_average = one_error_score(y_trues, y_preds) 
+        coverage = coverage_score(y_trues, y_preds)
+        rank_loss = ranking_loss_score(y_trues, y_preds)
 
         result_log = {
             "prediction": y_preds.tolist(),
@@ -464,12 +425,11 @@ class TemplateClassifier():
             "loss": test_loss,
             #"micro_f1": micro_f1,
             #"macro_f1": macro_f1,
-            #"AUC": auc,
-            "one_error": one_err,
+            "PR": pr_result,
+            "ROC": roc_result,
+            "one_error": one_err_average,
             "coverage_error": coverage,
             "rank_loss": rank_loss,
-            "mAP": mAPs,
-            #"ROC_AUC": roc_auc
         }
 
         print(result_log)

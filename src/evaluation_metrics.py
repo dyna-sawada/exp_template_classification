@@ -101,6 +101,17 @@ def one_error_score(y_trues: np.array, y_preds: np.array):
 
 
 
+def _one_error(y_true, y_pred):
+    count = 0
+    for y_p, y_t in zip(y_pred, y_true):
+        top_cls = np.argmax(y_p)
+        if y_t[top_cls] != 1:
+            count += 1
+
+    return count / len(y_pred)
+
+
+
 def coverage_score(y_trues: np.array, y_preds: np.array):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
