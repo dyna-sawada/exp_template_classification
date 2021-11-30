@@ -127,7 +127,7 @@ class TemplateIdsDataset(Dataset):
                 if ref_id == '*':
                     input_speech = lo_speech
                 else:
-                    lo_texts = lo_speech.split('.')
+                    lo_texts = nltk.sent_tokenize(lo_speech)
                     input_speech = ''
                     for i, lo_text in enumerate(lo_texts):
                         if i == len(lo_texts) - 1:
