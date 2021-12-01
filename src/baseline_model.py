@@ -22,8 +22,12 @@ def sigmoid(x):
 def main(args):
     temp_id_gold_dir = './work/temp_id_gold.json'
     temp_id_gold = json.load(open(temp_id_gold_dir))
+    temp_id_info_dir = './work/temp_id_info.json'
+    temp_id_info = json.load(open(temp_id_info_dir))
 
-    params_dict = json.load(open('./out_test/params.json'))    
+    temp_ids = list(temp_id_info.keys())
+
+    params_dict = json.load(open('{}/params.json'.format(args.directory)))    
 
     y_true = [] 
     for _lo_id, lo_id_dict in temp_id_gold.items():
@@ -43,7 +47,7 @@ def main(args):
 
         data_split_dict = json.load(
             open(
-                './out_test/iter_{}/data_split_fold_0.json'.format(iter_i)
+                '{}/iter_{}/data_split_fold_0.json'.format(args.directory, iter_i)
             )
         )
         test_data_ids = data_split_dict['test']['data_ids']
@@ -88,15 +92,22 @@ def main(args):
 
 
         print(
-            'Iter: {}\tPR AUC macro: {:.3f}\tROC AUC macro: {:.3f}\t\
-            OneError: {:.3f}\tCoverageLoss: {:.3f}\tRankingLoss: {:.3f}'.format(
-                iter_i, pr_average, roc_average, one_err_average, coverage, rank_loss
+            'Iter\t{}\nOneError\t{:.3f}\nCoverageLoss\t{:.3f}\nRankingLoss\t{:.3f}\nPR score\t{:.3f}\nROC score\t{:.3f}'.format(
+                iter_i, one_err_average, coverage, rank_loss, pr_average, roc_average
                 )
             )
-        print('PR AUC details')
-        print(pr_scores)
-        print('ROC AUC details')
-        print(roc_scores)
+        print('PR/ROC score details')
+        for i, (pr_s, roc_s) in enumerate(zip(pr_scores, roc_scores)):
+            print(
+                'temp{}\t{:.3f}\t{:.3f}'.format(
+                    temp_ids[i],
+                    pr_s,
+                    roc_s
+                )
+            )
+        
+
+
         print()
         #print(
         #    'F1 Micro: {:.3f}\tF1 Macro: {:.3f}'.format(
@@ -117,6 +128,10 @@ if __name__ == '__main__':
     parser.add_argument(
         '-bm', '--baseline-model', default='sampling', choices=['random', 'majority', 'sampling'],
         help='baseline model.'
+    )
+    parser.add_argument(
+        '-dir', '--directory',
+        help='output file directory.'
     )
 
     args = parser.parse_args()
