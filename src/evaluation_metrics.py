@@ -20,7 +20,7 @@ def f1_threshold_score(y_trues: np.array, y_preds: np.array, threshold=0.5, aver
 
 
 
-def PR_AUC_score(y_trues: np.array, y_preds: np.array, average='macro'):
+def pr_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro'):
     
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
     
@@ -43,7 +43,7 @@ def PR_AUC_score(y_trues: np.array, y_preds: np.array, average='macro'):
 
 
 
-def ROC_AUC_score(y_trues: np.array, y_preds: np.array, average='macro'):
+def roc_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro'):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
     

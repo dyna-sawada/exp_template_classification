@@ -8,7 +8,7 @@ import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from evaluation_metrics import f1_threshold_score
-from evaluation_metrics import PR_AUC_score, ROC_AUC_score
+from evaluation_metrics import pr_auc_scores_average, roc_auc_scores_average
 from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
 
 
@@ -61,8 +61,8 @@ if args.mode == 'train':
             p = np.average(np_y_val_pred[gold_index])
             prob.append(p)
 
-            _pr_scores, pr_average = PR_AUC_score(np.array(y_val_true), np.array(y_val_pred), average=args.average)
-            _roc_scores, roc_average = ROC_AUC_score(np.array(y_val_true), np.array(y_val_pred), average=args.average)
+            _pr_scores, pr_average = pr_auc_scores_average(np.array(y_val_true), np.array(y_val_pred), average=args.average)
+            _roc_scores, roc_average = roc_auc_scores_average(np.array(y_val_true), np.array(y_val_pred), average=args.average)
 
             pr_average_stock.append(pr_average)
             roc_average_stock.append(roc_average)
@@ -156,8 +156,8 @@ else:
         preds = np.array(preds)
         golds = np.array(golds)
 
-        pr_scores, pr_average = PR_AUC_score(golds, preds, average=args.average)
-        roc_scores, roc_average = ROC_AUC_score(golds, preds, average=args.average)
+        pr_scores, pr_average = pr_auc_scores_average(golds, preds, average=args.average)
+        roc_scores, roc_average = roc_auc_scores_average(golds, preds, average=args.average)
 
         #pr_ws.append(pr_w)
         

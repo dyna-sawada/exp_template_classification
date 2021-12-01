@@ -13,7 +13,7 @@ import numpy as np
 #from sklearn.metrics import classification_report
 #from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
 from evaluation_metrics import f1_threshold_score
-from evaluation_metrics import PR_AUC_score, ROC_AUC_score
+from evaluation_metrics import pr_auc_scores_average, roc_auc_scores_average
 from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
 
 import torch
@@ -261,8 +261,8 @@ class TemplateClassifier():
             #coverage = coverage_score(y_val_true, y_val_pred)
             #coverages.append(coverage)
 
-            _pr_scores, pr_average = PR_AUC_score(y_val_true, y_val_pred, average='weighted')
-            _roc_scores, roc_average = ROC_AUC_score(y_val_true, y_val_pred, average='weighted')
+            _pr_scores, pr_average = pr_auc_scores_average(y_val_true, y_val_pred, average='weighted')
+            _roc_scores, roc_average = roc_auc_scores_average(y_val_true, y_val_pred, average='weighted')
             
             pr_averages.append(pr_average)
             roc_averages.append(roc_average)
@@ -358,8 +358,8 @@ class TemplateClassifier():
         
         
         #coverage = coverage_score(y_trues, y_preds)
-        _pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='weighted')
-        _roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='weighted')
+        _pr_scores, pr_average = pr_auc_scores_average(y_trues, y_preds, average='weighted')
+        _roc_scores, roc_average = roc_auc_scores_average(y_trues, y_preds, average='weighted')
 
         logging.info(
             "Train\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
@@ -404,8 +404,8 @@ class TemplateClassifier():
         with torch.no_grad():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
-        pr_scores, pr_average = PR_AUC_score(y_trues, y_preds, average='weighted')
-        roc_scores, roc_average = ROC_AUC_score(y_trues, y_preds, average='weighted')
+        pr_scores, pr_average = pr_auc_scores_average(y_trues, y_preds, average='weighted')
+        roc_scores, roc_average = roc_auc_scores_average(y_trues, y_preds, average='weighted')
         pr_result = {
             "scores": pr_scores.tolist(),
             "average": pr_average

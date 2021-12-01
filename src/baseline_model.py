@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 from evaluation_metrics import f1_threshold_score
-from evaluation_metrics import PR_AUC_score, ROC_AUC_score
+from evaluation_metrics import pr_auc_scores_average, roc_auc_scores_average
 from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
 
 
@@ -83,9 +83,9 @@ def main(args):
             y_pred_i = np.tile(y_pred_i, (n_batch, 1))
 
         
-        pr_scores, pr_average = PR_AUC_score(y_true_i, y_pred_i)
-        roc_scores, roc_average = ROC_AUC_score(y_true_i, y_pred_i)
-        
+        pr_scores, pr_average = pr_auc_scores_average(y_true_i, y_pred_i)
+        roc_scores, roc_average = roc_auc_scores_average(y_true_i, y_pred_i)
+
         one_err_scores, one_err_average = one_error_score(y_true_i, y_pred_i)
         coverage = coverage_score(y_true_i, y_pred_i)
         rank_loss = ranking_loss_score(y_true_i, y_pred_i)
