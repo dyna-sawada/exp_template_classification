@@ -104,7 +104,7 @@ def main(args):
 
     
         ##################
-        # ROC curve plot #
+        # ROC/PR curve plot #
         ##################
         for i in range(25):
             fpr_base1, tpr_base1, thresholds_base1 = roc_curve(y_trues.T[i], y_preds_base1.T[i])
@@ -112,48 +112,47 @@ def main(args):
             fpr_rbc2, tpr_rbc2, thresholds_rbc2 = roc_curve(y_trues.T[i], y_preds_rbc2.T[i])
             fpr_rbc3, tpr_rbc3, thresholds_rbc3 = roc_curve(y_trues.T[i], y_preds_rbc3.T[i])
 
-            plt.plot(fpr_base1, tpr_base1, label='baseline 1')
-            plt.plot(fpr_rbc1, tpr_rbc1, label='roberta based 1')
-            plt.plot(fpr_rbc2, tpr_rbc2, label='roberta based 2')
-            plt.plot(fpr_rbc3, tpr_rbc3, label='roberta based 3')
-            
-            plt.legend()
-            plt.title('ROC curve template id {}'.format(temp_ids[i]))
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.grid(True)
-            #plt.savefig('{}/img/ROC_curve_template_id_{}.png'.format(args.directory, temp_ids[i]))
-            plt.show()
-            
-
-
-        ##################
-        # PR curve plot #
-        ##################
-        for i in range(25):
             pr_base1, rc_base1, thresholds_base1 = precision_recall_curve(y_trues.T[i], y_preds_base1.T[i])
             pr_rbc1, rc_rbc1, thresholds_rbc1 = precision_recall_curve(y_trues.T[i], y_preds_rbc1.T[i])
             pr_rbc2, rc_rbc2, thresholds_rbc2 = precision_recall_curve(y_trues.T[i], y_preds_rbc2.T[i])
             pr_rbc3, rc_rbc3, thresholds_rbc3 = precision_recall_curve(y_trues.T[i], y_preds_rbc3.T[i])
+            
 
-            plt.plot(rc_base1, pr_base1, label='baseline 1')
-            plt.plot(rc_rbc1, pr_rbc1, label='roberta based 1')
-            plt.plot(rc_rbc2, pr_rbc2, label='roberta based 2')
-            plt.plot(rc_rbc3, pr_rbc3, label='roberta based 3')
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1, 2, 1)
+            ax2 = fig.add_subplot(1, 2, 2)
+
+            ax1.plot(fpr_base1, tpr_base1, label='baseline 1')
+            ax1.plot(fpr_rbc1, tpr_rbc1, label='roberta based 1')
+            ax1.plot(fpr_rbc2, tpr_rbc2, label='roberta based 2')
+            ax1.plot(fpr_rbc3, tpr_rbc3, label='roberta based 3')
+
+            ax2.plot(rc_base1, pr_base1, label='baseline 1')
+            ax2.plot(rc_rbc1, pr_rbc1, label='roberta based 1')
+            ax2.plot(rc_rbc2, pr_rbc2, label='roberta based 2')
+            ax2.plot(rc_rbc3, pr_rbc3, label='roberta based 3')
+
+            ax1.legend()
+            ax1.set_title('ROC curve template id {}'.format(temp_ids[i]))
+            ax1.set_xlabel('False Positive Rate')
+            ax1.set_ylabel('True Positive Rate')
+            ax1.grid(True)
             
-            plt.legend()
-            plt.title('PR curve template id {}'.format(temp_ids[i]))
-            plt.xlabel('Recall')
-            plt.ylabel('Precision')
-            plt.grid(True)
-            #plt.savefig('{}/img/PR_curve_template_id_{}.png'.format(args.directory, temp_ids[i]))
+            ax2.legend()
+            ax2.set_title('PR curve template id {}'.format(temp_ids[i]))
+            ax2.set_xlabel('Recall')
+            ax2.set_ylabel('Precision')
+            ax2.grid(True)
+
+            fig.set_figheight(6)
+            fig.set_figwidth(14)
+
+            plt.savefig('{}/img/ROC_PR_curve_template_id_{}.png'.format(args.directory, temp_ids[i]))
             plt.show()
-            
 
 
         break
     
-
 
 
 
