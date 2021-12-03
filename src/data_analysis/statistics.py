@@ -27,25 +27,29 @@ def main():
     n_temp_id = len(anno_result[0])
 
     np_anno_result = np.array(anno_result)
-    n_each_temp_id = np.sum(np_anno_result, axis=0)
+    n_pos_each_temp_id = np.count_nonzero(np_anno_result > 0.5, axis=0)
+    n_neg_each_temp_id = np.count_nonzero(np_anno_result < 0.5, axis=0)
     total_n_temp_id = np.sum(np_anno_result)
 
 
     print('N_batch: {}\tN_total_temp_id: {}'.format(n_lo_id, n_temp_id))
     #print(n_each_temp_id)
-    assert n_temp_id == len(n_each_temp_id)
+    assert n_temp_id == len(n_pos_each_temp_id)
+    assert n_temp_id == len(n_neg_each_temp_id)
 
-    print("temp_id\tn_temp_id\tratio\ttemp_text")
-    for i, n in enumerate(n_each_temp_id):
+    print("temp_id\tn_positive\tn_negative\tratio_macro\tratio_micro\ttemp_text")
+    for i, (n_p, n_n) in enumerate(zip(n_pos_each_temp_id, n_neg_each_temp_id)):
         for temp_id, dic in temp_id_info.items():
             if dic['position'] == i:
                 temp_text = dic['temp_text']
 
-                print('{}\t{}\t{:.2f}%\t{}'
+                print('{}\t{}\t{}\t{:.2f}\t{:.2f}\t{}'
                         .format(
                             temp_id,
-                            n,
-                            n/total_n_temp_id*100,
+                            n_p,
+                            n_n,
+                            n_p / (n_p + n_n) * 100,
+                            n_p/total_n_temp_id*100,
                             temp_text
                         )
                     )
