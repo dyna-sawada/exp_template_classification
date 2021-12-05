@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 import argparse
+from numpy.lib.function_base import average
+from sklearn.metrics import f1_score
 
 
 
@@ -26,9 +28,6 @@ valid_losses = result_data['val_losses']
 pr_averages = result_data['pr_averages']
 roc_averages = result_data['roc_averages']
 
-#f1_micro = result_data['f1_micro']
-#f1_macro = result_data['f1_macro']
-#print(train_losses, valid_losses, coverages)
 
 epoch = [e for e, _ in enumerate(train_losses)]
 #print(epoch)
@@ -45,6 +44,18 @@ plt.show()
 plt.plot(valid_losses, roc_averages, label="ROC_AUC")
 plt.show()
 
-#plt.plot(epoch, f1_micro, label="f1_micro")
-#plt.plot(epoch, f1_macro, label="f1_macro")
 
+prediction = np.array(result_data['prediction'])
+gold = np.array(result_data['gold'])
+
+f1_micro, f1_macro = [], []
+for prd, gld in zip(prediction, gold):
+    f1_mi = f1_score(gld, np.round(prd), average='micro')
+    f1_ma = f1_score(gld, np.round(prd), average='macro')
+    f1_micro.append(f1_mi)
+    f1_macro.append(f1_ma)
+#print(f1_micro, f1_macro)
+
+plt.plot(valid_losses, f1_micro, label="f1_micro")
+plt.plot(valid_losses, f1_macro, label="f1_macro")
+plt.show()
