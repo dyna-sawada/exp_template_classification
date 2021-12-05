@@ -93,8 +93,8 @@ class TorchTemplateClassifier(nn.Module):
         self.config = AutoConfig.from_pretrained(MODEL_NAME)
         self.docenc = AutoModel.from_config(self.config)
         #self.docenc = AutoModel.from_pretrained(MODEL_NAME)
-        self.fc1 = nn.Linear(self.hDim, self.hDim)
-        self.fc2 = nn.Linear(self.hDim, 25)
+        self.fc1 = nn.Linear(self.hDim, 25)
+        self.fc2 = nn.Linear(25, 25)
         self.dropout = nn.Dropout(self.args.dropout)
         self.relu = nn.ReLU()
         self.sig = nn.Sigmoid()
@@ -107,7 +107,8 @@ class TorchTemplateClassifier(nn.Module):
         
         if self.args.encoder_out == 'cls':
             ## get [CLS] embedding
-            out = all_emb[:, 0, :]
+            #out = all_emb[:, 0, :]
+            out = torch.mean(all_emb, 1)
         
         elif self.args.encoder_out == 'fb':
             ## get [FB] embedding
