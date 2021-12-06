@@ -77,7 +77,7 @@ def parse_args():
         help='Drop Out.'
     )
     parser.add_argument(
-        '-gm', '--gamma', default=2, type=float,
+        '-gm', '--gamma', default=0, type=float,
         help='Focal loss\'s parameter gamma.'
     )
     
