@@ -64,6 +64,7 @@ def main(args):
             ##################
             ## Random Model ##
             ##################
+            np.random.seed(args.random_seed)
             y_pred_logits = np.random.randn(n_batch, n_label)
             y_pred_i = sigmoid(y_pred_logits)
         
@@ -132,6 +133,10 @@ if __name__ == '__main__':
     parser.add_argument(
         '-dir', '--directory',
         help='output file directory.'
+    )
+    parser.add_argument(
+        '-seed', '--random-seed', default=42,
+        help='random seed.'
     )
 
     args = parser.parse_args()
