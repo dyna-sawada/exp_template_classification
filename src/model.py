@@ -26,28 +26,31 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer, AdamW, get_linear
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, gamma=2, alpha=1):
+    def __init__(self, gamma=2, alpha=None):
         super(FocalLoss, self).__init__()
         self._gamma = gamma
         self._alpha = alpha
 
     def forward(self, y_pred, y_true):
-        """
+        
         ## version1.0
-        cross_entropy_loss_fn = nn.BCEWithLogitsLoss()
+        cross_entropy_loss_fn = nn.BCEWithLogitsLoss(reduction='none')
         cross_entropy_loss = cross_entropy_loss_fn(y_pred, y_true)
-        p_t = ((y_true * y_pred) +
-               ((1 - y_true) * (1 - y_pred)))
+        y_pred = torch.sigmoid(y_pred)
+        p_t = torch.where(y_true >= 0.5, y_pred, 1-y_pred)
+        
         modulating_factor = 1.0
         if self._gamma:
             modulating_factor = torch.pow(1.0 - p_t, self._gamma)
+
         alpha_weight_factor = 1.0
         if self._alpha is not None:
             alpha_weight_factor = (y_true * self._alpha +
                                    (1 - y_true) * (1 - self._alpha))
         focal_cross_entropy_loss = (modulating_factor * alpha_weight_factor *
                                     cross_entropy_loss)
-        focal_cross_entropy_loss = focal_cross_entropy_loss.mean()
+
+        focal_cross_entropy_loss = focal_cross_entropy_loss.mean()        
         """
         ## version2.0
         l = y_pred.reshape(-1)
@@ -57,8 +60,9 @@ class FocalLoss(nn.Module):
         logp = - torch.log(torch.clamp(p, 1e-4, 1-1e-4))
         focal_cross_entropy_loss = logp * ((1-p)**self._gamma)
         focal_cross_entropy_loss = 25*focal_cross_entropy_loss.mean()
-        
+        """
         return focal_cross_entropy_loss
+
 
 
 class DummyLR():
