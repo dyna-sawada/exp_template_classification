@@ -11,10 +11,10 @@ import numpy as np
 
 #from sklearn.metrics import recall_score, precision_score, f1_score
 #from sklearn.metrics import classification_report
-#from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
-from evaluation_metrics import f1_threshold_score
-from evaluation_metrics import pr_auc_scores_average, roc_auc_scores_average
-from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
+from sklearn.metrics import coverage_error, roc_auc_score, average_precision_score, label_ranking_loss
+from evaluation_metrics import f1_threshold_score_label
+from evaluation_metrics import pr_auc_scores_label, roc_auc_scores_label
+from evaluation_metrics import one_error_score_label, coverage_score_label, ranking_loss_score_label
 
 import torch
 import torch.nn as nn
@@ -244,7 +244,19 @@ class TemplateClassifier():
         train_losses, val_losses = [], []
         y_val_preds, y_val_trues = [], []
         #_f1_micros, _f1_macros, coverages = [], [], []
-        pr_averages, roc_averages = [], []
+        pr_averages_w, pr_averages_s, pr_averages_m = [], [], []
+        roc_averages_w, roc_averages_s, roc_averages_m = [], [], []
+        
+        pr_result = {
+            'micro': pr_averages_m,
+            'weighted': pr_averages_w,
+            'samples': pr_averages_s
+        }
+        roc_result = {
+            'micro': roc_averages_m,
+            'weighted': roc_averages_w,
+            'samples': roc_averages_s
+        }
 
         logging.info("Start training...")
         logging.info("Trainable parameters: {}".format(len(trainable_params)))
@@ -269,19 +281,34 @@ class TemplateClassifier():
             #coverage = coverage_score(y_val_true, y_val_pred)
             #coverages.append(coverage)
 
-            _pr_scores, pr_average = pr_auc_scores_average(y_val_true, y_val_pred, average='weighted')
-            _roc_scores, roc_average = roc_auc_scores_average(y_val_true, y_val_pred, average='weighted')
+            _pr_scores, pr_average_weighted = pr_auc_scores_label(y_val_true, y_val_pred, average='weighted')
+            _roc_scores, roc_average_weighted = roc_auc_scores_label(y_val_true, y_val_pred, average='weighted')
+            pr_average_samples = average_precision_score(y_val_true, y_val_pred, average='samples')
+            roc_average_samples = roc_auc_score(y_val_true, y_val_pred, average='samples')
+            pr_average_micro = average_precision_score(y_val_true, y_val_pred, average='micro')
+            roc_average_micro = roc_auc_score(y_val_true, y_val_pred, average='micro')
             
-            pr_averages.append(pr_average)
-            roc_averages.append(roc_average)
-
+            pr_result['weighted'].append(pr_average_weighted)
+            roc_result['weighted'].append(roc_average_weighted)
+            pr_result['samples'].append(pr_average_samples)
+            roc_result['samples'].append(roc_average_samples)
+            pr_result['micro'].append(pr_average_micro)
+            roc_result['micro'].append(roc_average_micro)
 
             logging.info(
-                "Valid\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
-                    pr_average, roc_average
-                    )
+                "Valid\t\tMicro\tLabel\tExample"
                 )
 
+            logging.info(
+                "PR AUC score:\t{:.3f}\t{:.3f}\t{:.3f}".format(
+                    pr_average_micro, pr_average_weighted, pr_average_samples,
+                    )
+                )
+            logging.info(
+                "ROC AUC score:\t{:.3f}\t{:.3f}\t{:.3f}".format(
+                    roc_average_micro, roc_average_weighted, roc_average_samples
+                    )
+                )
 
             if best_val_mse > val_loss:
                 logging.info("Best validation loss!")
@@ -303,8 +330,8 @@ class TemplateClassifier():
                     "val_losses": val_losses,
                     #"f1_micro": f1_micros,
                     #"f1_macro": f1_macros,
-                    "pr_averages": pr_averages,
-                    "roc_averages": roc_averages
+                    "pr_averages": pr_result,
+                    "roc_averages": roc_result
                     #"coverage_error": coverages
                     #"best_epoch": epoch_i
                 }
@@ -366,15 +393,28 @@ class TemplateClassifier():
         
         
         #coverage = coverage_score(y_trues, y_preds)
-        _pr_scores, pr_average = pr_auc_scores_average(y_trues, y_preds, average='weighted')
-        _roc_scores, roc_average = roc_auc_scores_average(y_trues, y_preds, average='weighted')
+        _pr_scores, pr_average_weighted = pr_auc_scores_label(y_trues, y_preds, average='weighted')
+        _roc_scores, roc_average_weighted = roc_auc_scores_label(y_trues, y_preds, average='weighted')
+        pr_average_samples = average_precision_score(y_trues, y_preds, average='samples')
+        roc_average_samples = roc_auc_score(y_trues, y_preds, average='samples')
+        pr_average_micro = average_precision_score(y_trues, y_preds, average='micro')
+        roc_average_micro = roc_auc_score(y_trues, y_preds, average='micro')
+
 
         logging.info(
-            "Train\tPR AUC score: {:.3f}\tROC AUC score: {:.3f}".format(
-                pr_average, roc_average
+            "Train\t\tMicro\tLabel\tExample"
+            )
+
+        logging.info(
+            "PR AUC score:\t{:.3f}\t{:.3f}\t{:.3f}".format(
+                pr_average_micro, pr_average_weighted, pr_average_samples,
                 )
             )
-        
+        logging.info(
+            "ROC AUC score:\t{:.3f}\t{:.3f}\t{:.3f}".format(
+                roc_average_micro, roc_average_weighted, roc_average_samples
+                )
+            )
 
         return np.mean(running_loss)
 
@@ -412,20 +452,33 @@ class TemplateClassifier():
         with torch.no_grad():
             test_loss, y_preds, y_trues = self.validate(test_loader)
 
-        pr_scores, pr_average = pr_auc_scores_average(y_trues, y_preds, average='weighted')
-        roc_scores, roc_average = roc_auc_scores_average(y_trues, y_preds, average='weighted')
+        pr_scores, pr_average_weighted = pr_auc_scores_label(y_trues, y_preds, average='weighted')
+        roc_scores, roc_average_weighted = roc_auc_scores_label(y_trues, y_preds, average='weighted')
+        pr_average_samples = average_precision_score(y_trues, y_preds, average='samples')
+        roc_average_samples = roc_auc_score(y_trues, y_preds, average='samples')
+        pr_average_micro = average_precision_score(y_trues, y_preds, average='micro')
+        roc_average_micro = roc_auc_score(y_trues, y_preds, average='micro')
+
         pr_result = {
             "scores": pr_scores.tolist(),
-            "average": pr_average
+            "average": {
+                'micro': pr_average_micro,
+                'weighted': pr_average_weighted,
+                'samples': pr_average_samples
+            }
         }
         roc_result = {
             "scores": roc_scores.tolist(),
-            "average": roc_average
+            "average": {
+                'micro': roc_average_micro,
+                'weighted': roc_average_weighted,
+                'samples': roc_average_samples
+            }
         }
 
-        _one_err_scores, one_err_average = one_error_score(y_trues, y_preds) 
-        coverage = coverage_score(y_trues, y_preds)
-        rank_loss = ranking_loss_score(y_trues, y_preds)
+        _one_err_scores, one_err_average = one_error_score_label(y_trues, y_preds) 
+        coverage = coverage_score_label(y_trues, y_preds)
+        rank_loss = ranking_loss_score_label(y_trues, y_preds)
 
         result_log = {
             "prediction": y_preds.tolist(),

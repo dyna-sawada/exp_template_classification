@@ -1,5 +1,6 @@
 
 
+from types import LambdaType
 import matplotlib.pyplot as plt
 import json
 import numpy as np
@@ -25,8 +26,12 @@ result_data = json.load(open(result_file))
 
 train_losses = result_data['train_losses']
 valid_losses = result_data['val_losses']
-pr_averages = result_data['pr_averages']
-roc_averages = result_data['roc_averages']
+pr_averages_m = result_data['pr_averages']['micro']
+roc_averages_m = result_data['roc_averages']['micro']
+pr_averages_w = result_data['pr_averages']['weighted']
+roc_averages_w = result_data['roc_averages']['weighted']
+pr_averages_s = result_data['pr_averages']['samples']
+roc_averages_s = result_data['roc_averages']['samples']
 
 
 epoch = [e for e, _ in enumerate(train_losses)]
@@ -38,10 +43,16 @@ plt.plot(epoch, valid_losses, label="valid loss")
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 plt.show()
 
-plt.plot(epoch, pr_averages, label="mAP")
+plt.plot(epoch, pr_averages_m, label="micro")
+plt.plot(epoch, pr_averages_w, label='wieghted')
+plt.plot(epoch, pr_averages_s, label='samples')
+plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 plt.show()
 
-plt.plot(epoch, roc_averages, label="ROC_AUC")
+plt.plot(epoch, roc_averages_m, label="micro")
+plt.plot(epoch, roc_averages_w, label='weighted')
+plt.plot(epoch, roc_averages_s, label='samples')
+plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 plt.show()
 
 
@@ -58,4 +69,5 @@ for prd, gld in zip(prediction, gold):
 
 plt.plot(epoch, f1_micro, label="f1_micro")
 plt.plot(epoch, f1_macro, label="f1_macro")
+plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 plt.show()

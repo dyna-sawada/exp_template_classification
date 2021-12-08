@@ -8,7 +8,7 @@ from sklearn.metrics import label_ranking_loss, coverage_error
 
 
 
-def f1_threshold_score(y_trues: np.array, y_preds: np.array, threshold=0.5, average='macro', zero_division=0):
+def f1_threshold_score_label(y_trues: np.array, y_preds: np.array, threshold=0.5, average='macro', zero_division=0):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
 
@@ -20,7 +20,7 @@ def f1_threshold_score(y_trues: np.array, y_preds: np.array, threshold=0.5, aver
 
 
 
-def pr_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro'):
+def pr_auc_scores_label(y_trues: np.array, y_preds: np.array, average='macro'):
     
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
     
@@ -43,7 +43,7 @@ def pr_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro')
 
 
 
-def roc_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro'):
+def roc_auc_scores_label(y_trues: np.array, y_preds: np.array, average='macro'):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
     
@@ -66,7 +66,7 @@ def roc_auc_scores_average(y_trues: np.array, y_preds: np.array, average='macro'
 
 
 
-def one_error_score(y_trues: np.array, y_preds: np.array):
+def one_error_score_label(y_trues: np.array, y_preds: np.array):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
 
@@ -112,7 +112,7 @@ def _one_error(y_true, y_pred):
 
 
 
-def coverage_score(y_trues: np.array, y_preds: np.array):
+def coverage_score_label(y_trues: np.array, y_preds: np.array):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
 
@@ -125,7 +125,7 @@ def coverage_score(y_trues: np.array, y_preds: np.array):
 
 
 
-def ranking_loss_score(y_trues: np.array, y_preds: np.array):
+def ranking_loss_score_label(y_trues: np.array, y_preds: np.array):
 
     assert y_trues.shape == y_preds.shape, "Numpy array's shape is not the same between preds and trues."
 

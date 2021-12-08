@@ -30,7 +30,8 @@ temp_ids = list(temp_id_info.keys())
 
 for i in range(n_iter):
     test_loss, test_one_err, test_coverage, test_rank_loss = [], [], [], []
-    test_pr_scores, test_pr_averages, test_roc_scores, test_roc_averages = [], [], [], []
+    test_pr_scores, test_pr_averages_m, test_pr_averages_w, test_pr_averages_s = [], [], [], []
+    test_roc_scores, test_roc_averages_m, test_roc_averages_w, test_roc_averages_s = [], [], [], []
     #test_f1_micro, test_f1_macro = [], []
     for j in range(n_fold):
         test_result_file = '{}/iter_{}/results_fold_{}.json'.format(args.directory, i, j)
@@ -44,18 +45,26 @@ for i in range(n_iter):
         coverage = test_result['coverage_error']
         rank_loss = test_result['rank_loss']
         pr_score = test_result['PR']['scores']
-        pr_average = test_result['PR']['average']
+        pr_average_m = test_result['PR']['average']['micro']
+        pr_average_w = test_result['PR']['average']['weighted']
+        pr_average_s = test_result['PR']['average']['samples']
         roc_score = test_result['ROC']['scores']
-        roc_average = test_result['ROC']['average']
+        roc_average_m = test_result['ROC']['average']['micro']
+        roc_average_w = test_result['ROC']['average']['weighted']
+        roc_average_s = test_result['ROC']['average']['samples']
         
         test_loss.append(loss)
         test_one_err.append(one_err)
         test_coverage.append(coverage)
         test_rank_loss.append(rank_loss)
         test_pr_scores.append(pr_score)
-        test_pr_averages.append(pr_average)
+        test_pr_averages_m.append(pr_average_m)
+        test_pr_averages_w.append(pr_average_w)
+        test_pr_averages_s.append(pr_average_s)
         test_roc_scores.append(roc_score)
-        test_roc_averages.append(roc_average)
+        test_roc_averages_m.append(roc_average_m)
+        test_roc_averages_w.append(roc_average_w)
+        test_roc_averages_s.append(roc_average_s)
         #test_f1_micro.append(f1_micro)
         #test_f1_macro.append(f1_macro)
 
@@ -66,10 +75,11 @@ for i in range(n_iter):
             np.mean(rank_loss)
         )
     )
+    print('\t\t\tMicro\tLabel\tExample')
     print(
-        'PR score\t{:.3f}\nROC score\t{:.3f}'.format(
-            np.mean(test_pr_averages),
-            np.mean(test_roc_averages)
+        'PR score\t{:.3f}\t{:.3f}\t{:.3f}\nROC score\t{:.3f}\t{:.3f}\t{:.3f}'.format(
+            np.mean(test_pr_averages_m), np.mean(test_pr_averages_w), np.mean(test_pr_averages_s),
+            np.mean(test_roc_averages_m), np.mean(test_roc_averages_w), np.mean(test_roc_averages_s)
         )
     )
     print('PR/ROC score details')
