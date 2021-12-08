@@ -38,10 +38,10 @@ plt.plot(epoch, valid_losses, label="valid loss")
 plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=1, fontsize=12)
 plt.show()
 
-plt.plot(valid_losses, pr_averages, label="mAP")
+plt.plot(epoch, pr_averages, label="mAP")
 plt.show()
 
-plt.plot(valid_losses, roc_averages, label="ROC_AUC")
+plt.plot(epoch, roc_averages, label="ROC_AUC")
 plt.show()
 
 
@@ -56,6 +56,6 @@ for prd, gld in zip(prediction, gold):
     f1_macro.append(f1_ma)
 #print(f1_micro, f1_macro)
 
-plt.plot(valid_losses, f1_micro, label="f1_micro")
-plt.plot(valid_losses, f1_macro, label="f1_macro")
+plt.plot(epoch, f1_micro, label="f1_micro")
+plt.plot(epoch, f1_macro, label="f1_macro")
 plt.show()
