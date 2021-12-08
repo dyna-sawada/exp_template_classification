@@ -103,6 +103,9 @@ class TorchTemplateClassifier(nn.Module):
         self.relu = nn.ReLU()
         self.sig = nn.Sigmoid()
 
+        nn.init.kaiming_normal_(self.fc1.weight)
+        nn.init.xavier_normal_(self.fc2.weight)
+
 
 
     def forward(self, input_id, attention_mask, *sp_token_positions):
@@ -225,7 +228,7 @@ class TemplateClassifier():
                  'weight_decay': 0.0}
             ]
 
-            t_total = ((len(train_loader) + self.args.batch_size - 1) // self.args.batch_size) * self.args.epochs       # check
+            t_total = ((len(train_loader) + self.args.batch_size - 1) // self.args.batch_size) * self.args.epochs
             optimizer = AdamW(trainable_params, lr=self.args.learning_rate, eps=1e-8)
             scheduler = get_linear_schedule_with_warmup(optimizer,
                                                         num_warmup_steps=int(t_total * 0.1),
