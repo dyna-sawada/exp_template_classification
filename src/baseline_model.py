@@ -85,10 +85,12 @@ def main(args):
             y_pred_i = np.tile(y_pred_i, (n_batch, 1))
 
         
-        pr_average_m = average_precision_score(y_true_i, y_pred_i, average='micro')
-        roc_average_m = roc_auc_score(y_true_i, y_pred_i, average='micro')
-        pr_scores, pr_average_w = pr_auc_scores_label(y_true_i, y_pred_i, 'weighted')
-        roc_scores, roc_average_w = roc_auc_scores_label(y_true_i, y_pred_i, 'weighted')
+        pr_average_mi = average_precision_score(y_true_i, y_pred_i, average='micro')
+        roc_average_mi = roc_auc_score(y_true_i, y_pred_i, average='micro')
+        pr_scores, pr_average_ma = pr_auc_scores_label(y_true_i, y_pred_i, 'macro')
+        roc_scores, roc_average_ma = roc_auc_scores_label(y_true_i, y_pred_i, 'macro')
+        _, pr_average_w = pr_auc_scores_label(y_true_i, y_pred_i, 'weighted')
+        _, roc_average_w = roc_auc_scores_label(y_true_i, y_pred_i, 'weighted')
         pr_average_s = average_precision_score(y_true_i, y_pred_i, average='samples')
         roc_average_s = roc_auc_score(y_true_i, y_pred_i, average='samples')
 
@@ -103,11 +105,11 @@ def main(args):
         #        )
         #    )
 
-        print('\t\tMicro\tLabel\tExample')
+        print('\t\tMicro\tMacro\tWeight\tSample')
         print(
-            'PR score\t{:.3f}\t{:.3f}\t{:.3f}\nROC score\t{:.3f}\t{:.3f}\t{:.3f}'.format(
-                pr_average_m, pr_average_w, pr_average_s,
-                roc_average_m, roc_average_w, roc_average_s
+            'PR score\t{:.4f}\t{:.4f}\t{:.3f}\t{:.3f}\nROC score\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}'.format(
+                pr_average_mi, pr_average_ma, pr_average_w, pr_average_s,
+                roc_average_mi, roc_average_ma, roc_average_w, roc_average_s
             )
         )
         print('PR/ROC score details (label)')
