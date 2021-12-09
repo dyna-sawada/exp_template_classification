@@ -4,14 +4,15 @@
 import json
 import numpy as np
 import argparse
+from numpy.lib.function_base import average
 
 import torch
 import torch.nn as nn
 
-from evaluation_metrics import f1_threshold_score
-from evaluation_metrics import pr_auc_scores_average, roc_auc_scores_average
-from evaluation_metrics import one_error_score, coverage_score, ranking_loss_score
+from evaluation_metrics import f1_threshold_score_label, pr_auc_scores_label, roc_auc_scores_label
+from evaluation_metrics import one_error_score_label, coverage_score_label, ranking_loss_score_label
 
+from sklearn.metrics import f1_score, average_precision_score, roc_auc_score
 
 
 def sigmoid(x):
@@ -84,20 +85,32 @@ def main(args):
             y_pred_i = np.tile(y_pred_i, (n_batch, 1))
 
         
-        pr_scores, pr_average = pr_auc_scores_average(y_true_i, y_pred_i)
-        roc_scores, roc_average = roc_auc_scores_average(y_true_i, y_pred_i)
+        pr_average_m = average_precision_score(y_true_i, y_pred_i, average='micro')
+        roc_average_m = roc_auc_score(y_true_i, y_pred_i, average='micro')
+        pr_scores, pr_average_w = pr_auc_scores_label(y_true_i, y_pred_i, 'weighted')
+        roc_scores, roc_average_w = roc_auc_scores_label(y_true_i, y_pred_i, 'weighted')
+        pr_average_s = average_precision_score(y_true_i, y_pred_i, average='samples')
+        roc_average_s = roc_auc_score(y_true_i, y_pred_i, average='samples')
 
-        one_err_scores, one_err_average = one_error_score(y_true_i, y_pred_i)
-        coverage = coverage_score(y_true_i, y_pred_i)
-        rank_loss = ranking_loss_score(y_true_i, y_pred_i)
+        #one_err_scores, one_err_average = one_error_score(y_true_i, y_pred_i)
+        #coverage = coverage_score(y_true_i, y_pred_i)
+        #rank_loss = ranking_loss_score(y_true_i, y_pred_i)
 
 
+        #print(
+        #    'Iter\t{}\nOneError\t{:.3f}\nCoverageLoss\t{:.3f}\nRankingLoss\t{:.3f}\nPR score\t{:.3f}\nROC score\t{:.3f}'.format(
+        #        iter_i, one_err_average, coverage, rank_loss, pr_average, roc_average
+        #        )
+        #    )
+
+        print('\t\tMicro\tLabel\tExample')
         print(
-            'Iter\t{}\nOneError\t{:.3f}\nCoverageLoss\t{:.3f}\nRankingLoss\t{:.3f}\nPR score\t{:.3f}\nROC score\t{:.3f}'.format(
-                iter_i, one_err_average, coverage, rank_loss, pr_average, roc_average
-                )
+            'PR score\t{:.3f}\t{:.3f}\t{:.3f}\nROC score\t{:.3f}\t{:.3f}\t{:.3f}'.format(
+                pr_average_m, pr_average_w, pr_average_s,
+                roc_average_m, roc_average_w, roc_average_s
             )
-        print('PR/ROC score details')
+        )
+        print('PR/ROC score details (label)')
         for i, (pr_s, roc_s) in enumerate(zip(pr_scores, roc_scores)):
             print(
                 'temp{}\t{:.3f}\t{:.3f}'.format(
