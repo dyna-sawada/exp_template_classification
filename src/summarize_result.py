@@ -75,7 +75,7 @@ for i in range(n_iter):
             np.mean(rank_loss)
         )
     )
-    print('\t\t\tMicro\tLabel\tExample')
+    print('\t\tMicro\tLabel\tExample')
     print(
         'PR score\t{:.3f}\t{:.3f}\t{:.3f}\nROC score\t{:.3f}\t{:.3f}\t{:.3f}'.format(
             np.mean(test_pr_averages_m), np.mean(test_pr_averages_w), np.mean(test_pr_averages_s),
