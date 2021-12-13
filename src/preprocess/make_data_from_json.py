@@ -61,6 +61,7 @@ def main():
             p_id = 0
 
             for _i in range(len(diagnostic_comments)):
+
                 is_valid = d_comments['template_annotation'][0]['is_valid']
                 is_understandable = d_comments['template_annotation'][0]['is_understandable']
                 is_not_duplicated = d_comments['template_annotation'][0]['is_not_duplicated']
@@ -68,6 +69,9 @@ def main():
                 if is_valid == False or is_understandable == False or is_not_duplicated == False:
                     continue
 
+                feedback_comment = d_comments['original_comment']
+                feedback_comment_revised = d_comments['template_annotation'][0]['fixed_comment']
+                template_comment = d_comments['template_annotation'][0]['template_comment']
                 temp_id = d_comments['template_annotation'][0]['template_number']
                 ref_id = d_comments['target_sent_idx']
 
@@ -76,16 +80,35 @@ def main():
 
                 if p_id not in temp_id_gold[lo_id]['temp_data'].keys():
                     temp_id_gold[lo_id]['temp_data'][p_id] = {
+                                                            'ref_id': ref_id,
                                                             'temp_id': [0] * len(used_temp_ids_gold),
-                                                            'ref_id': ref_id
+                                                            'feedback_comments':[]
                                                             }
                     temp_position = temp_id_info[temp_id]['position']
                     temp_id_gold[lo_id]['temp_data'][p_id]['temp_id'][temp_position] = 1
+
+                    temp_id_gold[lo_id]['temp_data'][p_id]['feedback_comments'].append(
+                        {
+                            'feedback_comment': feedback_comment,
+                            'feedback_comment_revised': feedback_comment_revised,
+                            'template_comment': template_comment
+                        }
+                    )
                                     
                 else:
                     if ref_id == temp_id_gold[lo_id]['temp_data'][p_id]['ref_id']:
                         temp_position = temp_id_info[temp_id]['position']
-                        temp_id_gold[lo_id]['temp_data'][p_id]['temp_id'][temp_position] = 1
+                        if temp_id_gold[lo_id]['temp_data'][p_id]['temp_id'][temp_position] == 0:
+                            temp_id_gold[lo_id]['temp_data'][p_id]['temp_id'][temp_position] = 1
+
+                            temp_id_gold[lo_id]['temp_data'][p_id]['feedback_comments'].append(
+                                {
+                                    'feedback_comment': feedback_comment,
+                                    'feedback_comment_revised': feedback_comment_revised,
+                                    'template_comment': template_comment
+                                }
+                            )
+
                     else:
                         p_id += 1
 
