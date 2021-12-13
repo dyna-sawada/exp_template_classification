@@ -28,8 +28,8 @@ def main():
         
         motion, pm_id, lo_id = get_motion_pm_lo_id(LO_ID)
         #print(motion)
-        pm_speech = d_j['pm_speech']
-        lo_speech = d_j['lo_speech']
+        pm_speech = d_j['speech']['pm_speech']['speech']
+        lo_speech = d_j['speech']['lo_speech']['speech']
 
         for _i, d in d_j['temp_data'].items():
             temp_id = d['temp_id']

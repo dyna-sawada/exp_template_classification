@@ -2,6 +2,7 @@
 
 import json
 import pprint
+import nltk
 
 
 
@@ -35,20 +36,24 @@ def main():
     temp_id_gold = {}
     for l in used_lo_ids:
         temp_id_gold[l] = {
-            'pm_speech': 'hoge',
-            'lo_speech': 'hoge',
+            'speech':{},
             'argument_structure': 'hoge',
             'temp_data': {}
         }
 
     for lo_id, anno_data in annotation_data.items():
         pm_speech = anno_data['speech']['pm_speech']
-        lo_speech = anno_data['speech']['lo_speech']['speech']
+        pm_sentences = nltk.sent_tokenize(pm_speech)
+        pm_speech_info = {
+            'speech':pm_speech,
+            'sentences':pm_sentences
+        }
+        lo_speech_info = anno_data['speech']['lo_speech']
         argument_structure = anno_data['argument_structure']
         diagnostic_comments = anno_data['diagnostic_comments']
 
-        temp_id_gold[lo_id]['pm_speech'] = pm_speech
-        temp_id_gold[lo_id]['lo_speech'] = lo_speech
+        temp_id_gold[lo_id]['speech']['pm_speech'] = pm_speech_info
+        temp_id_gold[lo_id]['speech']['lo_speech'] = lo_speech_info
         temp_id_gold[lo_id]['argument_structure'] = argument_structure
 
 
@@ -87,7 +92,7 @@ def main():
 
     pprint.pprint(temp_id_gold, indent=2)
     with open('./work/temp_id_gold.json', mode='wt', encoding='utf=8')as f:
-        json.dump(temp_id_gold, f, indent=2)
+        json.dump(temp_id_gold, f, indent=2, ensure_ascii=False)
 
 
 

@@ -58,11 +58,10 @@ class TemplateIdsDataset(Dataset):
         data_id = 0
         for lo_id_name, lo_id_dict in self.data.items():
             lo_id = used_lo_ids.index(lo_id_name)
-            pm_speech = self.data[lo_id_name]['pm_speech']
-            lo_speech = self.data[lo_id_name]['lo_speech']
-
-            pm_texts = nltk.sent_tokenize(pm_speech)
-            lo_texts = nltk.sent_tokenize(lo_speech)
+            _pm_speech = self.data[lo_id_name]['speech']['pm_speech']['speech']
+            lo_speech = self.data[lo_id_name]['speech']['lo_speech']['speech']
+            pm_texts = self.data[lo_id_name]['speech']['pm_speech']['sentences']
+            lo_texts = self.data[lo_id_name]['speech']['lo_speech']['sentences']
             len_lo_speech = len(lo_texts)
 
 
