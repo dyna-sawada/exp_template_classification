@@ -72,11 +72,13 @@ for sample_id in sample_index:
         sample_emb_2 = sent_emb_data['embedding']
         sample_lo_id_2 = sent_emb_data['lo_id']
         sample_ref_id_2 = sent_emb_data['ref_id']
-        if sample_lo_id == sample_lo_id_2:
+        if sample_lo_id == sample_lo_id_2 and sample_ref_id == sample_ref_id_2:
             continue
         #sim = F.cosine_similarity(sample_emb, sample_emb_2, dim=0)
         sim = cos_sim(sample_emb.numpy(), sample_emb_2.numpy())
         if np.isnan(sim):
+            sim = 0
+        if sample_lo_id == sample_lo_id_2:
             sim = 0
         sims.append(sim)
 
