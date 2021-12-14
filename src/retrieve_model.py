@@ -72,7 +72,7 @@ for sample_id in sample_index:
         sample_emb_2 = sent_emb_data['embedding']
         sample_lo_id_2 = sent_emb_data['lo_id']
         sample_ref_id_2 = sent_emb_data['ref_id']
-        if sample_lo_id == sample_lo_id_2 and sample_ref_id == sample_ref_id_2:
+        if sample_lo_id == sample_lo_id_2:
             continue
         #sim = F.cosine_similarity(sample_emb, sample_emb_2, dim=0)
         sim = cos_sim(sample_emb.numpy(), sample_emb_2.numpy())
@@ -136,4 +136,4 @@ for s_id, m_id, similarity in zip(sample_index, match_index, best_sims):
 
 
 df_sample = pd.DataFrame(data_array2d)
-df_sample.to_excel('./trash/data/retrieval_model_sample.xlsx', header=False, index=False)
+#df_sample.to_excel('./trash/data/retrieval_model_sample.xlsx', header=False, index=False)
