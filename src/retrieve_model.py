@@ -2,25 +2,27 @@
 
 import json
 import pickle
-from torch.utils import data
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
-#from sklearn.metrics.pairwise import cosine_similarity
+
+
 
 
 def cos_sim(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
+## fixed seed
 seed = 0
 np.random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 
 
+## set embeddings on each target sentences
 temp_id_gold_dir = './work/temp_id_gold.json'
 sbert_embeddings_dir = './work/sbert_embeddings.pickle'
 
@@ -30,7 +32,6 @@ with open(sbert_embeddings_dir, 'rb') as f:
 
 
 sent_emb_datas = []
-
 for lo_id, data_dict in tqdm(temp_id_gold.items()):
     pm_speech = data_dict['speech']['pm_speech']['speech']
     lo_speech = data_dict['speech']['lo_speech']['speech']
@@ -56,25 +57,18 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
         sent_emb_datas.append(sent_emb_info)
 
 
-#print(len(sent_emb_datas))
-
 sample_index = np.random.randint(0, len(sent_emb_datas), 20)
-#print(sample_index)
 match_index = []
 best_sims = []
 for sample_id in sample_index:
     sample_emb = sent_emb_datas[sample_id]['embedding']
     sample_lo_id = sent_emb_datas[sample_id]['lo_id']
-    sample_ref_id = sent_emb_datas[sample_id]['ref_id']
 
     sims = []
     for sent_emb_data in sent_emb_datas:
         sample_emb_2 = sent_emb_data['embedding']
         sample_lo_id_2 = sent_emb_data['lo_id']
-        sample_ref_id_2 = sent_emb_data['ref_id']
-        if sample_lo_id == sample_lo_id_2 and sample_ref_id == sample_ref_id_2:
-            continue
-        #sim = F.cosine_similarity(sample_emb, sample_emb_2, dim=0)
+        
         sim = cos_sim(sample_emb.numpy(), sample_emb_2.numpy())
         if np.isnan(sim):
             sim = 0
@@ -82,11 +76,9 @@ for sample_id in sample_index:
             sim = 0
         sims.append(sim)
 
-
     sims = torch.tensor(sims)
     sorted_id = torch.argsort(sims, descending=True).tolist()
-    #print(sims)
-    #print(sorted_id)
+
     match_id = sorted_id[0]
     match_index.append(match_id)
 
