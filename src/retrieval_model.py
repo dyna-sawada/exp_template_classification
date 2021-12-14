@@ -57,7 +57,7 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
         sent_emb_datas.append(sent_emb_info)
 
 
-sample_index = np.random.randint(0, len(sent_emb_datas), 20)
+sample_index = np.random.randint(0, len(sent_emb_datas), 21)
 match_index = []
 best_sims = []
 for sample_id in sample_index:
@@ -89,7 +89,7 @@ assert len(sample_index) == len(match_index)
 
 
 data_array2d = []
-for s_id, m_id, similarity in zip(sample_index, match_index, best_sims):
+for i, (s_id, m_id, similarity) in enumerate(zip(sample_index, match_index, best_sims)):
     original_data = sent_emb_datas[s_id]
     matching_data = sent_emb_datas[m_id]
 
@@ -109,7 +109,7 @@ for s_id, m_id, similarity in zip(sample_index, match_index, best_sims):
     target_sent_m = ' '.join(target_sent_m)
     fb_comments_m = matching_data['feedback_comments']
 
-    print('### sample')
+    print('### sample {}'.format(i))
     print('original: {}\tmatching: {}\tsimilarity:{:.4f}'.format(lo_id_o, lo_id_m, similarity))
     print('--- lo speech ---')
     print(lo_speech_o)
