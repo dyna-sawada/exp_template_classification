@@ -15,10 +15,14 @@ def main():
 
 
     anno_result = []
+    multi_label_count = 0
     for ind, val in temp_id_gold.items():
         for i, v in val['temp_data'].items():
             flag_count = v['temp_id'].count(1)
             assert flag_count != 0
+
+            if flag_count >= 2:
+                multi_label_count += 1
 
             anno_result.append(v['temp_id'])
 
@@ -32,7 +36,7 @@ def main():
     total_n_temp_id = np.sum(np_anno_result)
 
 
-    print('N_batch: {}\tN_total_temp_id: {}'.format(n_lo_id, n_temp_id))
+    print('N_batch: {}\tN_multi_label_batch: {}\tN_total_temp_id: {}'.format(n_lo_id, multi_label_count, n_temp_id))
     #print(n_each_temp_id)
     assert n_temp_id == len(n_pos_each_temp_id)
     assert n_temp_id == len(n_neg_each_temp_id)
