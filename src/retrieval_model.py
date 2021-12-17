@@ -5,6 +5,7 @@ import pickle
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import argparse
 import torch
 import torch.nn.functional as F
 
@@ -15,8 +16,20 @@ def cos_sim(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
+## args setting
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-st', '--sim-type', default='target', choices=['target', 'they_target']
+)
+parser.add_argument(
+    '-seed', '--random-seed', default=0,
+    help='random seed.'
+)
+
+args = parser.parse_args()
+
 ## fixed seed
-seed = 0
+seed = args.random_seed
 np.random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
@@ -41,8 +54,9 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
     for t_data in temp_data.values():
         ref_id = t_data['ref_id']
         fb_comments = t_data['feedback_comments']
-        embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][[ref_id]]
-        embedding = torch.mean(embedding, 0)
+        they_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][0]
+        target_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][[ref_id]]
+        target_embedding = torch.mean(target_embedding, 0)
 
         sent_emb_info = {
             'lo_id':lo_id,
@@ -51,7 +65,8 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
             'lo_sentences': lo_sentences,
             'ref_id': ref_id,
             'feedback_comments': fb_comments,
-            'embedding': embedding
+            'they_embedding': they_embedding,
+            'target_embedding': target_embedding
         }
 
         sent_emb_datas.append(sent_emb_info)
@@ -61,19 +76,28 @@ sample_index = np.random.randint(0, len(sent_emb_datas), 21)
 match_index = []
 best_sims = []
 for sample_id in sample_index:
-    sample_emb = sent_emb_datas[sample_id]['embedding']
+    sample_target_emb = sent_emb_datas[sample_id]['target_embedding']
     sample_lo_id = sent_emb_datas[sample_id]['lo_id']
+    if args.sim_type == 'they_target':
+        sample_they_emb = sent_emb_datas[sample_id]['they_embedding']
 
     sims = []
     for sent_emb_data in sent_emb_datas:
-        sample_emb_2 = sent_emb_data['embedding']
+        sample_target_emb_2 = sent_emb_data['target_embedding']
         sample_lo_id_2 = sent_emb_data['lo_id']
         
-        sim = cos_sim(sample_emb.numpy(), sample_emb_2.numpy())
+        sim = cos_sim(sample_target_emb.numpy(), sample_target_emb_2.numpy())
         if np.isnan(sim):
             sim = 0
         if sample_lo_id == sample_lo_id_2:
             sim = 0
+
+        if args.sim_type == 'they_target':
+            sample_they_emb_2 = sent_emb_data['they_embedding']
+            they_sim = cos_sim(sample_they_emb.numpy(), sample_they_emb_2.numpy())
+            print(they_sim)
+            sim = sim * they_sim
+
         sims.append(sim)
 
     sims = torch.tensor(sims)
