@@ -95,7 +95,6 @@ for sample_id in sample_index:
         if args.sim_type == 'they_target':
             sample_they_emb_2 = sent_emb_data['they_embedding']
             they_sim = cos_sim(sample_they_emb.numpy(), sample_they_emb_2.numpy())
-            print(they_sim)
             sim = sim * they_sim
 
         sims.append(sim)
