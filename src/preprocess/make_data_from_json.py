@@ -72,6 +72,11 @@ def main():
                 feedback_comment = d_comments['original_comment']
                 feedback_comment_revised = d_comments['template_annotation'][0]['fixed_comment']
                 template_comment = d_comments['template_annotation'][0]['template_comment']
+                template_number = d_comments['template_annotation'][0]['template_number']
+                template_text = temp_id_info[template_number]['temp_text']
+                slot1 = d_comments['template_annotation'][0]['slot1']
+                slot2 = d_comments['template_annotation'][0]['slot2']
+                slot3 = d_comments['template_annotation'][0]['slot3']
                 temp_id = d_comments['template_annotation'][0]['template_number']
                 ref_id = d_comments['target_sent_idx']
 
@@ -91,7 +96,12 @@ def main():
                         {
                             'feedback_comment': feedback_comment,
                             'feedback_comment_revised': feedback_comment_revised,
-                            'template_comment': template_comment
+                            'template_comment': template_comment,
+                            'template_number': template_number,
+                            'template_text': template_text,
+                            'slot1': slot1,
+                            'slot2': slot2,
+                            'slot3': slot3
                         }
                     )
                                     
@@ -105,7 +115,12 @@ def main():
                                 {
                                     'feedback_comment': feedback_comment,
                                     'feedback_comment_revised': feedback_comment_revised,
-                                    'template_comment': template_comment
+                                    'template_comment': template_comment,
+                                    'template_number': template_number,
+                                    'template_text': template_text,
+                                    'slot1': slot1,
+                                    'slot2': slot2,
+                                    'slot3': slot3
                                 }
                             )
 
