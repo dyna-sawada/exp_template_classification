@@ -43,19 +43,9 @@ temp_id_gold = json.load(open(temp_id_gold_dir))
 with open(sbert_embeddings_dir, 'rb') as f:
     sbert_embeddings = pickle.load(f)
 
-# test set
-test_lo_ids = [
-    'HW_LO_1_39', 'HW_LO_1_cs42',
-    'HW_LO_2_13', 'HW_LO_2_cs19',
-    'HW_LO_3_10', 'HW_LO_3_cs47',
-    'HW_LO_4_32', 'HW_LO_4_cs2',
-    'HW_LO_5_11', 'HW_LO_5_24',
-    'DP_LO_1_26', 'DP_LO_1_77',
-    'DP_LO_2_3', 'DP_LO_2_61',
-    'DP_LO_3_22', 'DP_LO_3_81',
-    'DP_LO_4_10', 'DP_LO_4_35',
-    'DP_LO_5_12', 'DP_LO_5_32'
-]
+test_lo_ids_dir = './data/test_lo_ids.txt'
+with open(test_lo_ids_dir, encoding='utf-8')as f:
+    test_lo_ids = [lo_id for lo_id in f.read().splitlines()]
 
 
 tr_sent_emb_datas = []
