@@ -4,3 +4,6 @@ out_test/
 trash/
 memory/
 src/test.py
+work/for_generality_samples.xlsx
+work/for_redundancy_samples.xlsx
+work/sbert_embeddings.pickle
