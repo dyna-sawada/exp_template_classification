@@ -25,8 +25,8 @@ parser.add_argument(
     '-seed', '--random-seed', default=0,
     help='random seed.'
 )
-
 args = parser.parse_args()
+
 
 ## fixed seed
 seed = args.random_seed
@@ -43,8 +43,23 @@ temp_id_gold = json.load(open(temp_id_gold_dir))
 with open(sbert_embeddings_dir, 'rb') as f:
     sbert_embeddings = pickle.load(f)
 
+# test set
+test_lo_ids = [
+    'HW_LO_1_39', 'HW_LO_1_cs42',
+    'HW_LO_2_13', 'HW_LO_2_cs19',
+    'HW_LO_3_10', 'HW_LO_3_cs47',
+    'HW_LO_4_32', 'HW_LO_4_cs2',
+    'HW_LO_5_11', 'HW_LO_5_24',
+    'DP_LO_1_26', 'DP_LO_1_77',
+    'DP_LO_2_3', 'DP_LO_2_61',
+    'DP_LO_3_22', 'DP_LO_3_81',
+    'DP_LO_4_10', 'DP_LO_4_35',
+    'DP_LO_5_12', 'DP_LO_5_32'
+]
 
-sent_emb_datas = []
+
+tr_sent_emb_datas = []
+te_sent_emb_datas = []
 for lo_id, data_dict in tqdm(temp_id_gold.items()):
     pm_speech = data_dict['speech']['pm_speech']['speech']
     lo_speech = data_dict['speech']['lo_speech']['speech']
@@ -69,52 +84,50 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
             'target_embedding': target_embedding
         }
 
-        sent_emb_datas.append(sent_emb_info)
+        if lo_id in test_lo_ids:
+            te_sent_emb_datas.append(sent_emb_info)
+        else:
+            tr_sent_emb_datas.append(sent_emb_info)
 
 
-sample_index = np.random.randint(0, len(sent_emb_datas), 21)
-match_index = []
 best_sims = []
-for sample_id in sample_index:
-    sample_target_emb = sent_emb_datas[sample_id]['target_embedding']
-    sample_lo_id = sent_emb_datas[sample_id]['lo_id']
+match_ids = []
+for te_sent_emb_data in te_sent_emb_datas:
+    te_target_emb = te_sent_emb_data["target_embedding"]
+
     if args.sim_type == 'they_target':
-        sample_they_emb = sent_emb_datas[sample_id]['they_embedding']
+        te_they_emb = te_sent_emb_data["they_embedding"]
 
     sims = []
-    for sent_emb_data in sent_emb_datas:
-        sample_target_emb_2 = sent_emb_data['target_embedding']
-        sample_lo_id_2 = sent_emb_data['lo_id']
-        
-        sim = cos_sim(sample_target_emb.numpy(), sample_target_emb_2.numpy())
+    for tr_sent_emb_data in tr_sent_emb_datas:
+        tr_target_emb = tr_sent_emb_data["target_embedding"]
+
+        sim = cos_sim(te_target_emb.numpy(), tr_target_emb.numpy())
+
         if np.isnan(sim):
             sim = 0
-        if sample_lo_id == sample_lo_id_2:
-            sim = 0
-
         if args.sim_type == 'they_target':
-            sample_they_emb_2 = sent_emb_data['they_embedding']
-            they_sim = cos_sim(sample_they_emb.numpy(), sample_they_emb_2.numpy())
+            tr_they_emb = tr_sent_emb_data["they_embedding"]
+            they_sim = cos_sim(te_they_emb.numpy(), tr_they_emb.numpy())
             sim = sim * they_sim
 
         sims.append(sim)
 
     sims = torch.tensor(sims)
     sorted_id = torch.argsort(sims, descending=True).tolist()
-
     match_id = sorted_id[0]
-    match_index.append(match_id)
-
+    match_ids.append(match_id)
     best_sim = sims[match_id].item()
     best_sims.append(best_sim)
 
-assert len(sample_index) == len(match_index)
+
+assert len(te_sent_emb_datas) == len(match_ids)
 
 
 data_array2d = []
-for i, (s_id, m_id, similarity) in enumerate(zip(sample_index, match_index, best_sims)):
-    original_data = sent_emb_datas[s_id]
-    matching_data = sent_emb_datas[m_id]
+for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, match_ids, best_sims)):
+    original_data = te_sent_emb_data
+    matching_data = tr_sent_emb_datas[m_id]
 
     lo_id_o = original_data['lo_id']
     pm_speech_o = original_data['pm_speech']
