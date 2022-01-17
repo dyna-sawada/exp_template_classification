@@ -8,12 +8,21 @@ import pandas as pd
 import argparse
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 
 
 
 def cos_sim(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+
+def convert_one_hot_from_temp_id(temp_ids:list, temp_id_info:dict):
+    one_hot_temp_ids = [0] * len(temp_id_info)
+    for t_id in temp_ids:
+        one_hot_id = temp_id_info[t_id]['position']
+        one_hot_temp_ids[one_hot_id] = 1
+    return one_hot_temp_ids
 
 
 ## args setting
@@ -24,6 +33,10 @@ parser.add_argument(
 parser.add_argument(
     '-seed', '--random-seed', default=0,
     help='random seed.'
+)
+parser.add_argument(
+    '-d', '--show-details', action='store_true',
+    help='show matching details.'
 )
 args = parser.parse_args()
 
@@ -37,9 +50,11 @@ torch.cuda.manual_seed_all(seed)
 
 ## set embeddings on each target sentences
 temp_id_gold_dir = './work/temp_id_gold.json'
+temp_id_info_dir = './work/temp_id_info.json'
 sbert_embeddings_dir = './work/sbert_embeddings.pickle'
 
 temp_id_gold = json.load(open(temp_id_gold_dir))
+temp_id_info = json.load(open(temp_id_info_dir))
 with open(sbert_embeddings_dir, 'rb') as f:
     sbert_embeddings = pickle.load(f)
 
@@ -59,6 +74,8 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
     for t_data in temp_data.values():
         ref_id = t_data['ref_id']
         fb_comments = t_data['feedback_comments']
+        temp_id_names = [fb_c['template_number'] for fb_c in fb_comments]
+        temp_id_onehot = convert_one_hot_from_temp_id(temp_id_names, temp_id_info)
         they_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][0]
         target_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][[ref_id]]
         target_embedding = torch.mean(target_embedding, 0)
@@ -70,6 +87,7 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
             'lo_sentences': lo_sentences,
             'ref_id': ref_id,
             'feedback_comments': fb_comments,
+            'temp_id': temp_id_onehot,
             'they_embedding': they_embedding,
             'target_embedding': target_embedding
         }
@@ -126,6 +144,7 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
     target_sent_o = [original_data['lo_sentences'][i] for i in ref_id_o]
     target_sent_o = ' '.join(target_sent_o)
     fb_comments_o = original_data['feedback_comments']
+    temp_id_o = original_data['temp_id']
 
     lo_id_m = matching_data['lo_id']
     pm_speech_m = matching_data['pm_speech']
@@ -134,23 +153,34 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
     target_sent_m = [matching_data['lo_sentences'][i] for i in ref_id_m]
     target_sent_m = ' '.join(target_sent_m)
     fb_comments_m = matching_data['feedback_comments']
+    temp_id_m = matching_data['temp_id']
+
+    precision = precision_score(temp_id_o, temp_id_m)
+    recall = recall_score(temp_id_o, temp_id_m)
+    f1 = f1_score(temp_id_o, temp_id_m)
 
     print('### sample {}'.format(i))
-    print('original: {}\tmatching: {}\tsimilarity:{:.4f}'.format(lo_id_o, lo_id_m, similarity))
-    print('--- lo speech ---')
-    print(lo_speech_o)
-    print('--- target sent ---')
-    print(target_sent_o)
-    print('--- prediction ---')
-    print(fb_comments_m)
-    print('--- gold ---')
-    print(fb_comments_o)
+    print(
+        'original: {}\tmatching: {}\tsimilarity:{:.4f}\nTEMPID\tPrecision: {:.4f}\tRecall: {:.4f}\tF1: {:.4f}'.format(
+            lo_id_o, lo_id_m, similarity, precision, recall, f1
+        )
+    )
+    if args.show_details:
+        print('--- lo speech ---')
+        print(lo_speech_o)
+        print('--- target sent ---')
+        print(target_sent_o)
+        print('--- prediction ---')
+        print(fb_comments_m)
+        print('--- gold ---')
+        print(fb_comments_o)
     print()
     
     data_array2d.append(
         [
             lo_id_o, pm_speech_o, lo_speech_o, target_sent_o, fb_comments_o,
-            similarity, lo_id_m, pm_speech_m, lo_speech_m, target_sent_m, fb_comments_m
+            similarity, lo_id_m, pm_speech_m, lo_speech_m, target_sent_m, fb_comments_m,
+            precision, recall, f1
         ]
     )
 
