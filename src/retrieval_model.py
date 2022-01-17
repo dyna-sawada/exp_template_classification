@@ -3,6 +3,7 @@
 import json
 import pickle
 from tqdm import tqdm
+import random
 import numpy as np
 import pandas as pd
 import argparse
@@ -25,10 +26,23 @@ def convert_one_hot_from_temp_id(temp_ids:list, temp_id_info:dict):
     return one_hot_temp_ids
 
 
+def cal_pre_rec_f1(y_true:list, y_pred:list):
+    pre = precision_score(y_true, y_pred)
+    rec = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    return pre, rec, f1
+
+
+def cal_average(sample_list:list):
+    s = sum(sample_list)
+    l = len(sample_list)
+    return s / l *100
+
+
 ## args setting
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-st', '--sim-type', default='target', choices=['target', 'they_target']
+    '-st', '--sim-type', default='target', choices=['target', 'they_target', 'random']
 )
 parser.add_argument(
     '-seed', '--random-seed', default=0,
@@ -131,6 +145,26 @@ for te_sent_emb_data in te_sent_emb_datas:
 
 assert len(te_sent_emb_datas) == len(match_ids)
 
+if args.sim_type == 'random':
+    p, r, f = [], [], []
+    for te_sent_emb_data in te_sent_emb_datas:
+        lo_id_o = te_sent_emb_data['lo_id']
+        temp_id_o = te_sent_emb_data['temp_id']
+        temp_id_r = [random.randint(0, 1) for _ in range(len(temp_id_info))]
+        print(temp_id_r)
+        precision, recall, f1 = cal_pre_rec_f1(temp_id_o, temp_id_r)
+        print(
+            'original: {}\nTEMPID\tPrecision: {:.4f}\tRecall: {:.4f}\tF1: {:.4f}'.format(
+                lo_id_o, precision, recall, f1
+            )
+        )
+        print()
+        p.append(precision)
+        r.append(recall)
+        f.append(f1)
+    print(cal_average(p), cal_average(r), cal_average(f))
+    exit()
+
 
 data_array2d = []
 for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, match_ids, best_sims)):
@@ -155,9 +189,7 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
     fb_comments_m = matching_data['feedback_comments']
     temp_id_m = matching_data['temp_id']
 
-    precision = precision_score(temp_id_o, temp_id_m)
-    recall = recall_score(temp_id_o, temp_id_m)
-    f1 = f1_score(temp_id_o, temp_id_m)
+    precision, recall, f1 = cal_pre_rec_f1(temp_id_o, temp_id_m)
 
     print('### sample {}'.format(i))
     print(
