@@ -18,6 +18,15 @@ def cos_sim(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
+def return_arg_str_sent_ids(arg_str_idx:list, ref_id:list):
+    and_count = [
+        len(set(as_idx) & set(ref_id)) for as_idx in arg_str_idx
+        ]
+    assert len(and_count) == len(arg_str_idx)
+    arg_id = and_count.index(max(and_count))
+    return arg_str_idx[arg_id]
+
+
 def convert_one_hot_from_temp_id(temp_ids:list, temp_id_info:dict):
     one_hot_temp_ids = [0] * len(temp_id_info)
     for t_id in temp_ids:
@@ -39,10 +48,13 @@ def cal_average(sample_list:list):
     return s / l *100
 
 
+
+
+
 ## args setting
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-st', '--sim-type', default='target', choices=['target', 'they_target', 'random']
+    '-st', '--sim-type', default='target', choices=['target', 'they_target', 'argstr_target', 'random']
 )
 parser.add_argument(
     '-seed', '--random-seed', default=0,
@@ -53,6 +65,9 @@ parser.add_argument(
     help='show matching details.'
 )
 args = parser.parse_args()
+
+
+
 
 
 ## fixed seed
@@ -83,16 +98,20 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
     pm_speech = data_dict['speech']['pm_speech']['speech']
     lo_speech = data_dict['speech']['lo_speech']['speech']
     lo_sentences = data_dict['speech']['lo_speech']['sentences']
+    arg_str_idx = data_dict['argument_structure']['argument_structure_sent_idx']
 
     temp_data = data_dict['temp_data']
     for t_data in temp_data.values():
         ref_id = t_data['ref_id']
+        arg_id = return_arg_str_sent_ids(arg_str_idx, ref_id)
         fb_comments = t_data['feedback_comments']
         temp_id_names = [fb_c['template_number'] for fb_c in fb_comments]
         temp_id_onehot = convert_one_hot_from_temp_id(temp_id_names, temp_id_info)
         they_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][0]
         target_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][[ref_id]]
         target_embedding = torch.mean(target_embedding, 0)
+        arg_str_embedding = sbert_embeddings[lo_id]['lo_speech']['embeddings'][[arg_id]]
+        arg_str_embedding = torch.mean(arg_str_embedding, 0)
 
         sent_emb_info = {
             'lo_id':lo_id,
@@ -103,6 +122,7 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
             'feedback_comments': fb_comments,
             'temp_id': temp_id_onehot,
             'they_embedding': they_embedding,
+            'arg_str_embedding': arg_str_embedding,
             'target_embedding': target_embedding
         }
 
@@ -119,6 +139,10 @@ for te_sent_emb_data in te_sent_emb_datas:
 
     if args.sim_type == 'they_target':
         te_they_emb = te_sent_emb_data["they_embedding"]
+    
+    if args.sim_type == 'argstr_target':
+        te_argstr_emb = te_sent_emb_data["arg_str_embedding"]
+
 
     sims = []
     for tr_sent_emb_data in tr_sent_emb_datas:
@@ -132,6 +156,11 @@ for te_sent_emb_data in te_sent_emb_datas:
             tr_they_emb = tr_sent_emb_data["they_embedding"]
             they_sim = cos_sim(te_they_emb.numpy(), tr_they_emb.numpy())
             sim = sim * they_sim
+
+        if args.sim_type == 'argstr_target':
+            tr_argstr_emb = tr_sent_emb_data["arg_str_embedding"]
+            argstr_sim = cos_sim(te_argstr_emb.numpy(), tr_argstr_emb.numpy())
+            sim = sim * argstr_sim
 
         sims.append(sim)
 
