@@ -36,19 +36,28 @@ print(
     )
 )
 
+cm_labels = [10, 20, 30, 40, 50, 60, 70, 80, 100, 110, 121, 148, 150, 160, 90, 131, 140, 170, 180, 190, 200, 211, 220, 230]
+tm_labels = [
+    'CA1', 'CA2', 'CA3', 'CA4',
+    'VAL1', 'VAL2', 'VAL3', 'VAL4',
+    'CLS1', 'CLS2', 'PR1',
+    'EX1', 'EX2', 'EX3', 'CMP1', 'CMP2',
+    'LR1', 'CLR1', 'CLR2',
+    'GR1', 'GR2', 'GR3', 'GS1', 'GS2'    
+]
 
 used_temp_id = set(temp_id_1) | set(temp_id_2)
 used_temp_id = sorted(list(used_temp_id))
-#print(used_temp_id)
 
-cm = confusion_matrix(temp_id_1, temp_id_2, labels=used_temp_id[1:])
+
+cm = confusion_matrix(temp_id_1, temp_id_2, labels=cm_labels)
 print('--- confusion matrics ---')
 print(cm)
 
 cm = pd.DataFrame(
     data=cm,
-    index=used_temp_id[1:], 
-    columns=used_temp_id[1:]
+    index=tm_labels, 
+    columns=tm_labels
 )
 
 sns.heatmap(
