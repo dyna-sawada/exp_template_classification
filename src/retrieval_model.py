@@ -196,6 +196,8 @@ if args.sim_type == 'random':
 
 
 data_array2d = []
+temp_id_os = []
+temp_id_ms = []
 for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, match_ids, best_sims)):
     original_data = te_sent_emb_data
     matching_data = tr_sent_emb_datas[m_id]
@@ -244,6 +246,13 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
             precision, recall, f1
         ]
     )
+    temp_id_os.append(temp_id_o)
+    temp_id_ms.append(temp_id_m)
+
+p_macro = precision_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
+r_macro = recall_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
+f_macro = f1_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
+print(p_macro, r_macro, f_macro)
 
 
 df_sample = pd.DataFrame(data_array2d)
