@@ -1,0 +1,127 @@
+{
+  "10": {
+    "position": 0,
+    "temp_text_jp": "なぜ { X } によって { Y } という良い結果が起こるのかが不明確",
+    "temp_text_en": "It is unclear why {X} causes a good result of {Y}."
+  },
+  "20": {
+    "position": 1,
+    "temp_text_jp": "なぜ { X } によって { Y } という悪い結果が起こるのかが不明確",
+    "temp_text_en": "It is unclear why {X} causes a bad result of {Y}."
+  },
+  "30": {
+    "position": 2,
+    "temp_text_jp": "なぜ { X } によって { Y } という良い結果が抑制されるのかが不明確",
+    "temp_text_en": "It is unclear why {X} suppresses a good result of {Y}."
+  },
+  "40": {
+    "position": 3,
+    "temp_text_jp": "なぜ { X } によって { Y } という悪い結果が抑制されるのかが不明確",
+    "temp_text_en": "It is unclear why {X} suppresses a bad result of {Y}."
+  },
+  "50": {
+    "position": 4,
+    "temp_text_jp": "なぜ { X } にとって { Y } が良いことなのかが不明確",
+    "temp_text_en": "It is unclear why {Y} is good for {X}."
+  },
+  "60": {
+    "position": 5,
+    "temp_text_jp": "なぜ { X } にとって { Y } が悪いことなのかが不明確",
+    "temp_text_en": "It is unclear why {Y} is bad for {X}."
+  },
+  "70": {
+    "position": 6,
+    "temp_text_jp": "なぜ { X } は { Y } とすべきと考えているのかが不明確",
+    "temp_text_en": "It is unclear why {X} should {Y}."
+  },
+  "80": {
+    "position": 7,
+    "temp_text_jp": "なぜ { X } は { Y } とすべきでないと考えているのかが不明確",
+    "temp_text_en": "It is unclear why {X} should not {Y}."
+  },
+  "90": {
+    "position": 8,
+    "temp_text_jp": "なぜ { X } よりも { Y } を優先すべきかの説明が不足している",
+    "temp_text_en": "It lacks an explanation of why {Y} should be preferred over {X}."
+  },
+  "100": {
+    "position": 9,
+    "temp_text_jp": "なぜ { X } は { Y } という特性を持つと言えるのかが不明確",
+    "temp_text_en": "It is unclear why {X} has the property of {Y}."
+  },
+  "110": {
+    "position": 10,
+    "temp_text_jp": "なぜ ( { Z } という点において ) { X } と { Y } は同じ/似ていると言えるのかが不明確",
+    "temp_text_en": "It is unclear why {X} and {Y} are the same/similar in term of {Z}"
+  },
+  "121": {
+    "position": 11,
+    "temp_text_jp": "なぜ { X } を実現可能なのかが不明確",
+    "temp_text_en": "It is unclear why {X} can be achieved."
+  },
+  "131": {
+    "position": 12,
+    "temp_text_jp": "{ X } を実現するのに，なぜ { Z } ではなく { Y } という方法が良いのかの説明が不足している",
+    "temp_text_en": "It lacks an explanation of why {Y} is a better way to {X} instead of {Z}."
+  },
+  "148": {
+    "position": 13,
+    "temp_text_jp": "{ X } の具体例には何があるか",
+    "temp_text_en": "It lacks the specificity of what exactly is an example of {X}."
+  },
+  "150": {
+    "position": 14,
+    "temp_text_jp": "{ X } はどの程度 { Y } かの具体性に欠ける",
+    "temp_text_en": "It lacks the specificity of how much {X} is {Y}."
+  },
+  "160": {
+    "position": 15,
+    "temp_text_jp": "{ X } というのは限定的な状況である",
+    "temp_text_en": "It is a limiting situation that {X}."
+  },
+  "190": {
+    "position": 16,
+    "temp_text_jp": "{ X } という主張/理由が論題とどのように関係するのかが不明確",
+    "temp_text_en": "It is unclear how the statement {X} relates to the topic."
+  },
+  "200": {
+    "position": 17,
+    "temp_text_jp": "肯定側の { X } という主張に { Y } というのは直接的な反論になっていない",
+    "temp_text_en": "It is not a direct ojbection of the gevernment's claim {X} to say {Y}."
+  },
+  "211": {
+    "position": 18,
+    "temp_text_jp": "{ X } というのは肯定側が定義している { Y } を考慮できていない",
+    "temp_text_en": "The statement {X} fails to consider {Y}, which is the definition of the gevernment side."
+  },
+  "220": {
+    "position": 19,
+    "temp_text_jp": "なぜ肯定側の { X } という主張よりも否定側の { Y } という主張が優位だと言えるのかが不明確",
+    "temp_text_en": "It is unclear why the opposition's claim {Y} is superior to the govenment's claim of {X}."
+  },
+  "230": {
+    "position": 20,
+    "temp_text_jp": "肯定側からの { X } という反論が想定される",
+    "temp_text_en": "It is expected that the govenment will object that {X}."
+  },
+  "140": {
+    "position": 21,
+    "temp_text_jp": "なぜ { X } という理由が { Y } という結論を支持するのかが不明確",
+    "temp_text_en": "It is unclear why a premise {X} supports a claim {Y}."
+  },
+  "170": {
+    "position": 22,
+    "temp_text_jp": "{ X } という表現が何を意味しているのか分からない",
+    "temp_text_en": "It is hard to understand what the statement {X} is means."
+  },
+  "180": {
+    "position": 23,
+    "temp_text_jp": "{ X } について具体例はあるが一般化した説明がない",
+    "temp_text_en": "There is a specific example for {X}, but it lacks a generalized justification."
+  },
+  "999": {
+    "position": 24,
+    "temp_text_jp": "（いずれのテンプレートも適さないため該当なし）",
+    "temp_text_en": "(NA)"
+  }
+}

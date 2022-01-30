@@ -54,7 +54,7 @@ def cal_average(sample_list:list):
 ## args setting
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-st', '--sim-type', default='target', choices=['target', 'they_target', 'argstr_target', 'random']
+    '-st', '--sim-type', default='target', choices=['target', 'they_target', 'argstr_target', 'random', 'majority']
 )
 parser.add_argument(
     '-seed', '--random-seed', default=0,
@@ -175,23 +175,35 @@ for te_sent_emb_data in te_sent_emb_datas:
 assert len(te_sent_emb_datas) == len(match_ids)
 
 if args.sim_type == 'random':
-    p, r, f = [], [], []
+    temp_id_os, temp_id_ms = [], []
     for te_sent_emb_data in te_sent_emb_datas:
         lo_id_o = te_sent_emb_data['lo_id']
         temp_id_o = te_sent_emb_data['temp_id']
-        temp_id_r = [random.randint(0, 1) for _ in range(len(temp_id_info))]
-        print(temp_id_r)
-        precision, recall, f1 = cal_pre_rec_f1(temp_id_o, temp_id_r)
-        print(
-            'original: {}\nTEMPID\tPrecision: {:.4f}\tRecall: {:.4f}\tF1: {:.4f}'.format(
-                lo_id_o, precision, recall, f1
-            )
-        )
-        print()
-        p.append(precision)
-        r.append(recall)
-        f.append(f1)
-    print(cal_average(p), cal_average(r), cal_average(f))
+        temp_id_m = [random.randint(0, 1) for _ in range(len(temp_id_info))]
+        temp_id_os.append(temp_id_o)
+        temp_id_ms.append(temp_id_m)
+
+    p_macro = precision_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    r_macro = recall_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    f_macro = f1_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    print(p_macro, r_macro, f_macro)
+    exit()
+
+if args.sim_type == 'majority':
+    temp_id_os, temp_id_ms = [], []
+    for te_sent_emb_data in te_sent_emb_datas:
+        lo_id_o = te_sent_emb_data['lo_id']
+        temp_id_o = te_sent_emb_data['temp_id']
+        temp_id_m = [0]*25
+        temp_id_m[9] = 1
+        precision, recall, f1 = cal_pre_rec_f1(temp_id_o, temp_id_m)
+        temp_id_os.append(temp_id_o)
+        temp_id_ms.append(temp_id_m)
+        
+    p_macro = precision_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    r_macro = recall_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    f_macro = f1_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+    print(p_macro, r_macro, f_macro)
     exit()
 
 
@@ -249,9 +261,9 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
     temp_id_os.append(temp_id_o)
     temp_id_ms.append(temp_id_m)
 
-p_macro = precision_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
-r_macro = recall_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
-f_macro = f1_score(temp_id_os, temp_id_ms, average='macro', zero_division=0)
+p_macro = precision_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+r_macro = recall_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
+f_macro = f1_score(temp_id_os, temp_id_ms, average='micro', zero_division=0)
 print(p_macro, r_macro, f_macro)
 
 
