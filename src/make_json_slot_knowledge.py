@@ -17,7 +17,7 @@ slot_knowledge_dict = {}
 for template_number, temp_info_dict in temp_id_info.items():
     if template_number == '999':
         continue
-    temp_text = temp_info_dict['temp_text']
+    temp_text = temp_info_dict['temp_text_en']
     slot_knowledge_dict[template_number] = {
         'temp_text': temp_text,
         'slot1': [],
@@ -42,9 +42,9 @@ for lo_id, debate_info_dict in temp_id_gold.items():
             if template_number == '999':
                 continue
             
-            slot1 = fb_comment['slot1']
-            slot2 = fb_comment['slot2']
-            slot3 = fb_comment['slot3']
+            slot1 = fb_comment['slot1_en']
+            slot2 = fb_comment['slot2_en']
+            slot3 = fb_comment['slot3_en']
 
             slot_knowledge_dict[template_number]['slot1'].append(slot1)
             slot_knowledge_dict[template_number]['slot2'].append(slot2)
