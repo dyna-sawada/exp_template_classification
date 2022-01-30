@@ -10,7 +10,7 @@ def main():
     gold_data_dir = './work/temp_id_gold.json'
     temp_id_gold = json.load(open(gold_data_dir))
 
-    info_data_dir = './work/temp_id_info.json'
+    info_data_dir = './data/temp_id_info.json'
     temp_id_info = json.load(open(info_data_dir))
 
 

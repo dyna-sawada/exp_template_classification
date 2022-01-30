@@ -9,7 +9,7 @@ import nltk
 def main():
     
     ANNOTATION_DATA_PATH = './data/diagnostic_comments.json'
-    TEMPLATE_INFO_DATA_PATH = './work/temp_id_info.json'
+    TEMPLATE_INFO_DATA_PATH = './data/temp_id_info.json'
 
     annotation_data = json.load(open(ANNOTATION_DATA_PATH))
     temp_id_info = json.load(open(TEMPLATE_INFO_DATA_PATH))
@@ -69,14 +69,19 @@ def main():
                 if is_valid == False or is_understandable == False or is_not_duplicated == False:
                     continue
 
-                feedback_comment = d_comments['original_comment']
-                feedback_comment_revised = d_comments['template_annotation'][0]['fixed_comment']
-                template_comment = d_comments['template_annotation'][0]['template_comment']
+                original_comment = d_comments['original_comment']
+                fixed_comment_jp = d_comments['template_annotation'][0]['fixed_comment_jp']
+                fixed_comment_en = d_comments['template_annotation'][0]['fixed_comment_en']
+                template_comment_jp = d_comments['template_annotation'][0]['template_comment_jp']
+                template_comment_en = d_comments['template_annotation'][0]['template_comment_en']
                 template_number = d_comments['template_annotation'][0]['template_number']
-                template_text = temp_id_info[template_number]['temp_text']
-                slot1 = d_comments['template_annotation'][0]['slot1']
-                slot2 = d_comments['template_annotation'][0]['slot2']
-                slot3 = d_comments['template_annotation'][0]['slot3']
+                #template_text = temp_id_info[template_number]['temp_text']
+                slot1_jp = d_comments['template_annotation'][0]['slot1_jp']
+                slot1_en = d_comments['template_annotation'][0]['slot1_en']
+                slot2_jp = d_comments['template_annotation'][0]['slot2_jp']
+                slot2_en = d_comments['template_annotation'][0]['slot2_en']
+                slot3_jp = d_comments['template_annotation'][0]['slot3_jp']
+                slot3_en = d_comments['template_annotation'][0]['slot3_en']
                 temp_id = d_comments['template_annotation'][0]['template_number']
                 ref_id = d_comments['target_sent_idx']
 
@@ -94,14 +99,18 @@ def main():
 
                     temp_id_gold[lo_id]['temp_data'][p_id]['feedback_comments'].append(
                         {
-                            'feedback_comment': feedback_comment,
-                            'feedback_comment_revised': feedback_comment_revised,
-                            'template_comment': template_comment,
+                            'original_comment': original_comment,
+                            'fixed_comment_jp': fixed_comment_jp,
+                            'fixed_comment_en': fixed_comment_en,
+                            'template_comment_jp': template_comment_jp,
+                            'template_comment_en': template_comment_en,
                             'template_number': template_number,
-                            'template_text': template_text,
-                            'slot1': slot1,
-                            'slot2': slot2,
-                            'slot3': slot3
+                            'slot1_jp': slot1_jp,
+                            'slot1_en': slot1_en,
+                            'slot2_jp': slot2_jp,
+                            'slot2_en': slot2_en,
+                            'slot3_jp': slot3_jp,
+                            'slot3_en': slot3_en
                         }
                     )
                                     
@@ -113,14 +122,18 @@ def main():
 
                             temp_id_gold[lo_id]['temp_data'][p_id]['feedback_comments'].append(
                                 {
-                                    'feedback_comment': feedback_comment,
-                                    'feedback_comment_revised': feedback_comment_revised,
-                                    'template_comment': template_comment,
+                                    'original_comment': original_comment,
+                                    'fixed_comment_jp': fixed_comment_jp,
+                                    'fixed_comment_en': fixed_comment_en,
+                                    'template_comment_jp': template_comment_jp,
+                                    'template_comment_en': template_comment_en,
                                     'template_number': template_number,
-                                    'template_text': template_text,
-                                    'slot1': slot1,
-                                    'slot2': slot2,
-                                    'slot3': slot3
+                                    'slot1_jp': slot1_jp,
+                                    'slot1_en': slot1_en,
+                                    'slot2_jp': slot2_jp,
+                                    'slot2_en': slot2_en,
+                                    'slot3_jp': slot3_jp,
+                                    'slot3_en': slot3_en
                                 }
                             )
 

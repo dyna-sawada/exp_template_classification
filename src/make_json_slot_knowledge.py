@@ -5,7 +5,7 @@ import json
 temp_id_gold_dir = './work/temp_id_gold.json'
 temp_id_gold = json.load(open(temp_id_gold_dir))
 
-temp_id_info_dir = './work/temp_id_info.json'
+temp_id_info_dir = './data/temp_id_info.json'
 temp_id_info = json.load(open(temp_id_info_dir))
 
 test_lo_ids_dir = './data/test_lo_ids.txt'

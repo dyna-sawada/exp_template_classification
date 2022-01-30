@@ -79,7 +79,7 @@ torch.cuda.manual_seed_all(seed)
 
 ## set embeddings on each target sentences
 temp_id_gold_dir = './work/temp_id_gold.json'
-temp_id_info_dir = './work/temp_id_info.json'
+temp_id_info_dir = './data/temp_id_info.json'
 sbert_embeddings_dir = './work/sbert_embeddings.pickle'
 
 temp_id_gold = json.load(open(temp_id_gold_dir))

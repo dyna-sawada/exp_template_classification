@@ -33,7 +33,7 @@ for lo_id, temp_data in temp_datas.items():
                                         [lo_sentences[t_s_idx] for t_s_idx in target_sent_idx]
                                         )
                 original_comment = d_comment["original_comment"]
-                fixed_comment = t_annotation["fixed_comment"]
+                fixed_comment = t_annotation["fixed_comment_jp"]
                 annotator = t_annotation["annotator"]
 
                 data = [
