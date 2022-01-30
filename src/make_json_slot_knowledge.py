@@ -17,12 +17,25 @@ slot_knowledge_dict = {}
 for template_number, temp_info_dict in temp_id_info.items():
     if template_number == '999':
         continue
-    temp_text = temp_info_dict['temp_text_en']
+    temp_text_jp = temp_info_dict['temp_text_jp']
+    temp_text_en = temp_info_dict['temp_text_en']
     slot_knowledge_dict[template_number] = {
-        'temp_text': temp_text,
-        'slot1': [],
-        'slot2': [],
-        'slot3': []
+        'temp_text': {
+            'jp': temp_text_jp,
+            'en': temp_text_en
+        },
+        'slot1': {
+            'jp': [],
+            'en': []
+        },
+        'slot2': {
+            'jp': [],
+            'en': []
+        },
+        'slot3': {
+            'jp': [],
+            'en': []
+        }
     }
 
 
@@ -42,17 +55,25 @@ for lo_id, debate_info_dict in temp_id_gold.items():
             if template_number == '999':
                 continue
             
-            slot1 = fb_comment['slot1_en']
-            slot2 = fb_comment['slot2_en']
-            slot3 = fb_comment['slot3_en']
+            slot1_jp = fb_comment['slot1_jp']
+            slot1_en = fb_comment['slot1_en']
+            slot2_jp = fb_comment['slot2_jp']
+            slot2_en = fb_comment['slot2_en']
+            slot3_jp = fb_comment['slot3_jp']
+            slot3_en = fb_comment['slot3_en']
 
-            slot_knowledge_dict[template_number]['slot1'].append(slot1)
-            slot_knowledge_dict[template_number]['slot2'].append(slot2)
-            slot_knowledge_dict[template_number]['slot3'].append(slot3)
+            slot_knowledge_dict[template_number]['slot1']['jp'].append(slot1_jp)
+            slot_knowledge_dict[template_number]['slot1']['en'].append(slot1_en)
+            slot_knowledge_dict[template_number]['slot2']['jp'].append(slot2_jp)
+            slot_knowledge_dict[template_number]['slot2']['en'].append(slot2_en)
+            slot_knowledge_dict[template_number]['slot3']['jp'].append(slot3_jp)
+            slot_knowledge_dict[template_number]['slot3']['en'].append(slot3_en)
 
-            assert len(slot_knowledge_dict[template_number]['slot1']) == len(slot_knowledge_dict[template_number]['slot2'])
-            assert len(slot_knowledge_dict[template_number]['slot1']) == len(slot_knowledge_dict[template_number]['slot3'])
-
+            assert len(slot_knowledge_dict[template_number]['slot1']['jp']) == len(slot_knowledge_dict[template_number]['slot2']['jp'])
+            assert len(slot_knowledge_dict[template_number]['slot1']['jp']) == len(slot_knowledge_dict[template_number]['slot3']['jp'])
+            assert len(slot_knowledge_dict[template_number]['slot1']['en']) == len(slot_knowledge_dict[template_number]['slot2']['en'])
+            assert len(slot_knowledge_dict[template_number]['slot1']['en']) == len(slot_knowledge_dict[template_number]['slot3']['en'])
+            assert len(slot_knowledge_dict[template_number]['slot1']['jp']) == len(slot_knowledge_dict[template_number]['slot1']['en'])
 
 
 with open('./work/slot_knowledges.json', mode='wt', encoding='utf=8')as f:
