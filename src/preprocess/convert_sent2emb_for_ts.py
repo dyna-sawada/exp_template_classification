@@ -8,6 +8,10 @@ from sentence_transformers import SentenceTransformer
 import pprint
 
 
+###########################################################################
+# convert sentence to embeddings with SentenceBert for template selection #
+###########################################################################
+
 
 d_data_dir = './work/temp_id_gold.json'
 d_data = json.load(open(d_data_dir))
