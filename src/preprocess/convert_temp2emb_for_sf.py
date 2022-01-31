@@ -83,6 +83,10 @@ for t_id in tqdm(used_temp_ids):
 
 
 pprint.pprint(sent_emb_dict, indent=2)
-#with open('./work/sbert_embeddings_for_sf.pickle', mode='wb') as f:
-#    pickle.dump(sent_emb_dict, f)
+if args.combination == 'pair':
+    with open('./work/sbert_embeddings_for_sf_pair.pickle', mode='wb') as f:
+        pickle.dump(sent_emb_dict, f)
+elif args.combination == 'all':
+    with open('./work/sbert_embeddings_for_sf_all.pickle', mode='wb') as f:
+        pickle.dump(sent_emb_dict, f)
 
