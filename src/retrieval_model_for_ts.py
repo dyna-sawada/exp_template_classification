@@ -103,6 +103,8 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
     temp_data = data_dict['temp_data']
     for t_data in temp_data.values():
         ref_id = t_data['ref_id']
+        if len(ref_id) == 0:
+            ref_id = list(range(len(lo_sentences)))
         arg_id = return_arg_str_sent_ids(arg_str_idx, ref_id)
         fb_comments = t_data['feedback_comments']
         temp_id_names = [fb_c['template_number'] for fb_c in fb_comments]
