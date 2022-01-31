@@ -80,7 +80,7 @@ torch.cuda.manual_seed_all(seed)
 ## set embeddings on each target sentences
 temp_id_gold_dir = './work/temp_id_gold.json'
 temp_id_info_dir = './data/temp_id_info.json'
-sbert_embeddings_dir = './work/sbert_embeddings.pickle'
+sbert_embeddings_dir = './work/sbert_embeddings_for_ts.pickle'
 
 temp_id_gold = json.load(open(temp_id_gold_dir))
 temp_id_info = json.load(open(temp_id_info_dir))
@@ -233,13 +233,12 @@ for i, (te_sent_emb_data, m_id, similarity) in enumerate(zip(te_sent_emb_datas, 
     temp_id_m = matching_data['temp_id']
 
     precision, recall, f1 = cal_pre_rec_f1(temp_id_o, temp_id_m)
-
-    print('### sample {}'.format(i))
-    print(
-        'original: {}\tmatching: {}\tsimilarity:{:.4f}\nTEMPID\tPrecision: {:.4f}\tRecall: {:.4f}\tF1: {:.4f}'.format(
-            lo_id_o, lo_id_m, similarity, precision, recall, f1
-        )
-    )
+    #print('### sample {}'.format(i))
+    #print(
+    #    'original: {}\tmatching: {}\tsimilarity:{:.4f}\nTEMPID\tPrecision: {:.4f}\tRecall: {:.4f}\tF1: {:.4f}'.format(
+    #        lo_id_o, lo_id_m, similarity, precision, recall, f1
+    #    )
+    #)
     if args.show_details:
         print('--- lo speech ---')
         print(lo_speech_o)
