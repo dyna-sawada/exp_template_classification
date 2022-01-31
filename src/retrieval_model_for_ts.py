@@ -267,4 +267,4 @@ print(p_macro, r_macro, f_macro)
 
 
 df_sample = pd.DataFrame(data_array2d)
-#df_sample.to_excel('./trash/data/retrieval_model_sample.xlsx', header=False, index=False)
+#df_sample.to_excel('./trash/data/retrieval_model_out_ts.xlsx', header=False, index=False)
