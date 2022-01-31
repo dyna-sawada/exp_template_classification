@@ -6,4 +6,5 @@ memory/
 src/test.py
 work/for_generality_samples.xlsx
 work/for_redundancy_samples.xlsx
-work/sbert_embeddings.pickle
+work/sbert_embeddings_for_ts.pickle
+work/sbert_embeddings_for_sf.pickle
