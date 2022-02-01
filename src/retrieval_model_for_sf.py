@@ -1,10 +1,12 @@
 
 
+import re
 import json
 import pickle
 from tqdm import tqdm
 import random
 import itertools
+import statistics
 import numpy as np
 import pandas as pd
 import argparse
@@ -43,13 +45,17 @@ def convert_one_hot_from_temp_id(temp_ids:list, temp_id_info:dict):
         one_hot_temp_ids[one_hot_id] = 1
     return one_hot_temp_ids
 
+def get_motion(LOID):
+    m = re.search('(.*)_LO_(.*)_(.*)', LOID)
+    motion = m.group(1)
+    return motion
 
 
 
 ## args setting
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-c', '--combination', default='pair', choices=['pair', 'all']
+    '-m', '--model', default='pair', choices=['pair', 'all', 'majority', 'random_pair', 'random_all']
 )
 parser.add_argument(
     '-seed', '--random-seed', default=0,
@@ -75,10 +81,6 @@ temp_id_info_dir = './data/temp_id_info.json'
 test_lo_ids_dir = './data/test_lo_ids.txt'
 slot_knowledges_dir = './work/slot_knowledges.json'
 sbert_embeddings_ts_dir = './work/sbert_embeddings_for_ts.pickle'
-if args.combination == 'pair':
-    sbert_embeddings_sf_dir = './work/sbert_embeddings_for_sf_pair.pickle'
-elif args.combination == 'all':
-    sbert_embeddings_sf_dir = './work/sbert_embeddings_for_sf_all.pickle'
 
 temp_id_gold = json.load(open(temp_id_gold_dir))
 temp_id_info = json.load(open(temp_id_info_dir))
@@ -87,8 +89,15 @@ with open(test_lo_ids_dir, encoding='utf-8')as f:
     test_lo_ids = [lo_id for lo_id in f.read().splitlines()]
 with open(sbert_embeddings_ts_dir, 'rb') as f:
     sbert_embeddings_ts = pickle.load(f)
-with open(sbert_embeddings_sf_dir, 'rb') as f:
-    sbert_embeddings_sf = pickle.load(f)
+
+if args.model == 'pair':
+    sbert_embeddings_sf_dir = './work/sbert_embeddings_for_sf_pair.pickle'
+    with open(sbert_embeddings_sf_dir, 'rb') as f:
+        sbert_embeddings_sf = pickle.load(f)
+elif args.model == 'all':
+    sbert_embeddings_sf_dir = './work/sbert_embeddings_for_sf_all.pickle'
+    with open(sbert_embeddings_sf_dir, 'rb') as f:
+        sbert_embeddings_sf = pickle.load(f)
 
 
 
@@ -139,6 +148,7 @@ match_ids = []
 data_array2d = []
 for te_sent_emb_data in te_sent_emb_datas:
     lo_id_o = te_sent_emb_data['lo_id']
+    motion = get_motion(lo_id_o)
     pm_speech_o = te_sent_emb_data['pm_speech']
     lo_speech_o = te_sent_emb_data['lo_speech']
     ref_id_o = te_sent_emb_data['ref_id']
@@ -154,24 +164,23 @@ for te_sent_emb_data in te_sent_emb_datas:
         if temp_id == '999':
             continue
 
+        split_index = slot_knowledges[temp_id]['split_index']
+
         fb_comment_o = te_fb_comment['original_comment']
         fixed_comment_o = te_fb_comment['fixed_comment_jp']
         temp_comment_o = te_fb_comment['template_comment_jp']
 
-        tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings']
-        ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
-        temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
+        if args.model == 'pair' or args.model == 'all':
+            tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings']
+            ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+            temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
         
-        if args.combination == 'pair':
-            temp_comment_m_jp = slot_knowledges[temp_id]['temp_text']['jp'].translate(
-                str.maketrans({
-                        'X': slot_knowledges[temp_id]['slot1']['jp'][ind],
-                        'Y': slot_knowledges[temp_id]['slot2']['jp'][ind],
-                        'Z': slot_knowledges[temp_id]['slot3']['jp'][ind]
-                })
-            )
+        if args.model == 'pair':
+            slot1_ind = ind
+            slot2_ind = ind
+            slot3_ind = ind
 
-        elif args.combination == 'all':
+        elif args.model == 'all':
             slot1_en, slot2_en, slot3_en = slot_knowledges[temp_id]['slot1']['en'], slot_knowledges[temp_id]['slot2']['en'], slot_knowledges[temp_id]['slot3']['en']
             sorted_slot1_en, sorted_slot2_en, sorted_slot3_en = sorted(list(set(slot1_en))), sorted(list(set(slot2_en))), sorted(list(set(slot3_en)))
             slot_all = list(itertools.product(sorted_slot1_en, sorted_slot2_en, sorted_slot3_en))
@@ -179,13 +188,52 @@ for te_sent_emb_data in te_sent_emb_datas:
             slot2_ind = slot2_en.index(slot_all[ind][1])
             slot3_ind = slot3_en.index(slot_all[ind][2])
 
-            temp_comment_m_jp = slot_knowledges[temp_id]['temp_text']['jp'].translate(
-                str.maketrans({
-                        'X': slot_knowledges[temp_id]['slot1']['jp'][slot1_ind],
-                        'Y': slot_knowledges[temp_id]['slot2']['jp'][slot2_ind],
-                        'Z': slot_knowledges[temp_id]['slot3']['jp'][slot3_ind]
-                })
-            )
+        elif args.model == 'random_pair':
+            slot1s = slot_knowledges[temp_id]['slot1']['jp']
+            if motion == 'DP':
+                slot1s_m = slot1s[:split_index]
+            elif motion == 'HW':
+                slot1s_m = slot1s[split_index:]
+            ind = random.randrange(0, len(slot1s_m))
+            slot1_ind = ind
+            slot2_ind = ind
+            slot3_ind = ind
+        
+        elif args.model == 'random_all':
+            slot1s = slot_knowledges[temp_id]['slot1']['jp']
+            if motion == 'DP':
+                slot1s_m = slot1s[:split_index]
+            elif motion == 'HW':
+                slot1s_m = slot1s[split_index:]
+            slot1_ind = random.randrange(0, len(slot1s_m))
+            slot2_ind = random.randrange(0, len(slot1s_m))
+            slot3_ind = random.randrange(0, len(slot1s_m))
+
+        elif args.model == 'majority':
+            slot1s = slot_knowledges[temp_id]['slot1']['jp']
+            slot2s = slot_knowledges[temp_id]['slot2']['jp']
+            slot3s = slot_knowledges[temp_id]['slot3']['jp']
+            if motion == 'DP':
+                slot1s_m = slot1s[:split_index]
+                slot2s_m = slot2s[:split_index]
+                slot3s_m = slot3s[:split_index]
+            elif motion == 'HW':
+                slot1s_m = slot1s[split_index:]
+                slot2s_m = slot2s[split_index:]
+                slot3s_m = slot3s[split_index:]
+
+            slot1_ind = slot1s.index(statistics.mode(slot1s_m))
+            slot2_ind = slot2s.index(statistics.mode(slot2s_m))
+            slot3_ind = slot3s.index(statistics.mode(slot3s_m))
+
+        temp_comment_m_jp = slot_knowledges[temp_id]['temp_text']['jp'].translate(
+            str.maketrans({
+                    'X': slot_knowledges[temp_id]['slot1']['jp'][slot1_ind],
+                    'Y': slot_knowledges[temp_id]['slot2']['jp'][slot2_ind],
+                    'Z': slot_knowledges[temp_id]['slot3']['jp'][slot3_ind]
+            })
+        )
+
 
         if args.show_details:
             print('--- lo speech ---')
@@ -206,8 +254,13 @@ for te_sent_emb_data in te_sent_emb_datas:
 
 
 df_sample = pd.DataFrame(data_array2d)
-if args.combination == 'pair':
+if args.model == 'pair':
     df_sample.to_excel('./out_test/retrieval_model_out_sf_pair.xlsx', header=False, index=False)
-elif args.combination == 'all':
+elif args.model == 'all':
     df_sample.to_excel('./out_test/retrieval_model_out_sf_all.xlsx', header=False, index=False)
-
+elif args.model == 'random_pair':
+    df_sample.to_excel('./out_test/retrieval_model_out_sf_rp.xlsx', header=False, index=False)
+elif args.model == 'random_all':
+    df_sample.to_excel('./out_test/retrieval_model_out_sf_ra.xlsx', header=False, index=False)
+elif args.model == 'majority':
+    df_sample.to_excel('./out_test/retrieval_model_out_sf_ma.xlsx', header=False, index=False)

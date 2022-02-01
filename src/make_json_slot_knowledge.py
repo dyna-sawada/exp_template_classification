@@ -1,5 +1,12 @@
 
 import json
+import re
+
+
+def get_motion(LOID):
+    m = re.search('(.*)_LO_(.*)_(.*)', LOID)
+    motion = m.group(1)
+    return motion
 
 
 temp_id_gold_dir = './work/temp_id_gold.json'
@@ -35,15 +42,17 @@ for template_number, temp_info_dict in temp_id_info.items():
         'slot3': {
             'jp': [],
             'en': []
-        }
+        },
+        'split_index': 0
     }
 
-
+m_flag = [False] * 24
+count = [0] * 24
 for lo_id, debate_info_dict in temp_id_gold.items():
-
     if lo_id in test_lo_ids:
         continue
 
+    motion = get_motion(lo_id)
     temp_data_dict = debate_info_dict['temp_data']
 
     for _i, fb_info_dict in temp_data_dict.items():
@@ -51,10 +60,11 @@ for lo_id, debate_info_dict in temp_id_gold.items():
 
         for fb_comment in feedback_comments:
             template_number = fb_comment['template_number']
-
             if template_number == '999':
                 continue
-            
+
+            position = temp_id_info[template_number]['position']
+
             slot1_jp = fb_comment['slot1_jp']
             slot1_en = fb_comment['slot1_en']
             slot2_jp = fb_comment['slot2_jp']
@@ -75,6 +85,12 @@ for lo_id, debate_info_dict in temp_id_gold.items():
             assert len(slot_knowledge_dict[template_number]['slot1']['en']) == len(slot_knowledge_dict[template_number]['slot3']['en'])
             assert len(slot_knowledge_dict[template_number]['slot1']['jp']) == len(slot_knowledge_dict[template_number]['slot1']['en'])
 
+            
+            if motion == 'HW' and m_flag[position] == False:
+                slot_knowledge_dict[template_number]['split_index'] = count[position]
+                m_flag[position] = True
+
+            count[position] += 1
 
 with open('./work/slot_knowledges.json', mode='wt', encoding='utf=8')as f:
     json.dump(slot_knowledge_dict, f, indent=2, ensure_ascii=False)

@@ -453,7 +453,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 24
   },
   "20": {
     "temp_text": {
@@ -735,7 +736,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 18
   },
   "30": {
     "temp_text": {
@@ -771,7 +773,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 0
   },
   "40": {
     "temp_text": {
@@ -849,7 +852,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 7
   },
   "50": {
     "temp_text": {
@@ -1137,7 +1141,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 11
   },
   "60": {
     "temp_text": {
@@ -1329,7 +1334,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 6
   },
   "70": {
     "temp_text": {
@@ -1521,7 +1527,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 10
   },
   "80": {
     "temp_text": {
@@ -1605,7 +1612,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 6
   },
   "90": {
     "temp_text": {
@@ -1755,7 +1763,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 10
   },
   "100": {
     "temp_text": {
@@ -2463,7 +2472,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 63
   },
   "110": {
     "temp_text": {
@@ -2589,7 +2599,8 @@
         "",
         "there is a gap between children whose parents help them and those whose parents do not"
       ]
-    }
+    },
+    "split_index": 9
   },
   "121": {
     "temp_text": {
@@ -2793,7 +2804,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 9
   },
   "131": {
     "temp_text": {
@@ -3117,7 +3129,8 @@
         "other than homework",
         "other methods"
       ]
-    }
+    },
+    "split_index": 18
   },
   "148": {
     "temp_text": {
@@ -3561,7 +3574,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 37
   },
   "150": {
     "temp_text": {
@@ -3765,7 +3779,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 17
   },
   "160": {
     "temp_text": {
@@ -3861,7 +3876,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 3
   },
   "190": {
     "temp_text": {
@@ -4077,7 +4093,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 10
   },
   "200": {
     "temp_text": {
@@ -4521,7 +4538,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 33
   },
   "211": {
     "temp_text": {
@@ -4713,7 +4731,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 14
   },
   "220": {
     "temp_text": {
@@ -4953,7 +4972,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 14
   },
   "230": {
     "temp_text": {
@@ -5163,7 +5183,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 7
   },
   "140": {
     "temp_text": {
@@ -5523,7 +5544,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 32
   },
   "170": {
     "temp_text": {
@@ -5595,7 +5617,8 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 1
   },
   "180": {
     "temp_text": {
@@ -5655,6 +5678,7 @@
         "",
         ""
       ]
-    }
+    },
+    "split_index": 1
   }
 }
