@@ -3,6 +3,7 @@
 import re
 import json
 import pickle
+import scipy as sp
 from tqdm import tqdm
 import random
 import itertools
@@ -170,14 +171,22 @@ for te_sent_emb_data in te_sent_emb_datas:
         if args.model == 'pair':
             if motion == 'DP':
                 tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][:split_index]
+                ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+                #temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
+
+                slot1_ind = ind
+                slot2_ind = ind
+                slot3_ind = ind
+
             elif motion == 'HW':
                 tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][split_index:]
-            ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
-            temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
-        
-            slot1_ind = ind
-            slot2_ind = ind
-            slot3_ind = ind
+                ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+                #temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
+
+                slot1_ind = ind + split_index
+                slot2_ind = ind + split_index
+                slot3_ind = ind + split_index
+            
 
         elif args.model == 'all':
             slot1_en_o, slot2_en_o, slot3_en_o = slot_knowledges[temp_id]['slot1']['en'], slot_knowledges[temp_id]['slot2']['en'], slot_knowledges[temp_id]['slot3']['en']
@@ -187,41 +196,56 @@ for te_sent_emb_data in te_sent_emb_datas:
             
             if motion == 'DP':
                 tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][:len(slot_all)]
+                ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+                #temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
+                slot1_ind = slot1_en.index(slot_all[ind][0])
+                slot2_ind = slot2_en.index(slot_all[ind][1])
+                slot3_ind = slot3_en.index(slot_all[ind][2])
+
             elif motion == 'HW':
                 tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][len(slot_all):]
+                ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+                #temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind+len(slot_all)]
             
-            ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
-            temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
-
-            if motion == 'HW':
                 slot1_en, slot2_en, slot3_en = slot1_en_o[split_index:], slot2_en_o[split_index:], slot3_en_o[split_index:]
                 sorted_slot1_en, sorted_slot2_en, sorted_slot3_en = sorted(list(set(slot1_en))), sorted(list(set(slot2_en))), sorted(list(set(slot3_en)))
                 slot_all = list(itertools.product(sorted_slot1_en, sorted_slot2_en, sorted_slot3_en))        
 
-            slot1_ind = slot1_en.index(slot_all[ind][0])
-            slot2_ind = slot2_en.index(slot_all[ind][1])
-            slot3_ind = slot3_en.index(slot_all[ind][2])
+                slot1_ind = slot1_en.index(slot_all[ind][0]) + split_index
+                slot2_ind = slot2_en.index(slot_all[ind][1]) + split_index
+                slot3_ind = slot3_en.index(slot_all[ind][2]) + split_index
+            
 
         elif args.model == 'random_pair':
             slot1s = slot_knowledges[temp_id]['slot1']['jp']
             if motion == 'DP':
                 slot1s_m = slot1s[:split_index]
+                ind = random.randrange(0, len(slot1s_m))
+                slot1_ind = ind
+                slot2_ind = ind
+                slot3_ind = ind
+
             elif motion == 'HW':
                 slot1s_m = slot1s[split_index:]
-            ind = random.randrange(0, len(slot1s_m))
-            slot1_ind = ind
-            slot2_ind = ind
-            slot3_ind = ind
+                ind = random.randrange(0, len(slot1s_m))
+                slot1_ind = ind + split_index
+                slot2_ind = ind + split_index
+                slot3_ind = ind + split_index
+
         
         elif args.model == 'random_all':
             slot1s = slot_knowledges[temp_id]['slot1']['jp']
             if motion == 'DP':
                 slot1s_m = slot1s[:split_index]
+                slot1_ind = random.randrange(0, len(slot1s_m))
+                slot2_ind = random.randrange(0, len(slot1s_m))
+                slot3_ind = random.randrange(0, len(slot1s_m))
+
             elif motion == 'HW':
                 slot1s_m = slot1s[split_index:]
-            slot1_ind = random.randrange(0, len(slot1s_m))
-            slot2_ind = random.randrange(0, len(slot1s_m))
-            slot3_ind = random.randrange(0, len(slot1s_m))
+                slot1_ind = random.randrange(0, len(slot1s_m)) + split_index
+                slot2_ind = random.randrange(0, len(slot1s_m)) + split_index
+                slot3_ind = random.randrange(0, len(slot1s_m)) + split_index
 
         elif args.model == 'majority':
             slot1s = slot_knowledges[temp_id]['slot1']['jp']
@@ -239,6 +263,7 @@ for te_sent_emb_data in te_sent_emb_datas:
             slot1_ind = slot1s.index(statistics.mode(slot1s_m))
             slot2_ind = slot2s.index(statistics.mode(slot2s_m))
             slot3_ind = slot3s.index(statistics.mode(slot3s_m))
+
 
         temp_comment_m_jp = slot_knowledges[temp_id]['temp_text']['jp'].translate(
             str.maketrans({
