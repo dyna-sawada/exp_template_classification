@@ -43,6 +43,7 @@ for t_id, slot_infos in t_data.items():
     slot1 = slot_infos['slot1']['en']
     slot2 = slot_infos['slot2']['en']
     slot3 = slot_infos['slot3']['en']
+    split_index = slot_infos['split_index']
 
     if args.combination == 'pair':
         for s1, s2, s3 in zip(slot1, slot2, slot3):
@@ -58,22 +59,37 @@ for t_id, slot_infos in t_data.items():
             sent_emb_dict[t_id]['temp_comments'].append(template_comment)
 
     elif args.combination == 'all':
-        slot1 = exclude_duplication(slot1)
-        slot2 = exclude_duplication(slot2)
-        slot3 = exclude_duplication(slot3)
-        slot_all = list(itertools.product(slot1, slot2, slot3))
-        for s_all in slot_all:
+        slot1_dp, slot2_dp, slot3_dp = slot1[:split_index], slot2[:split_index], slot3[:split_index]
+        slot1_hw, slot2_hw, slot3_hw = slot1[split_index:], slot2[split_index:], slot3[split_index:]
+        slot1_dp, slot2_dp, slot3_dp = exclude_duplication(slot1_dp), exclude_duplication(slot2_dp), exclude_duplication(slot3_dp)
+        slot1_hw, slot2_hw, slot3_hw = exclude_duplication(slot1_hw), exclude_duplication(slot2_hw), exclude_duplication(slot3_hw)
+
+        slot_all_dp = list(itertools.product(slot1_dp, slot2_dp, slot3_dp))
+        slot_all_hw = list(itertools.product(slot1_hw, slot2_hw, slot3_hw))
+
+        for s_all_dp in slot_all_dp:
             template_comment = temp_text.translate(
                 str.maketrans({
                     '{': '',
                     '}': '',
-                    'X': s_all[0],
-                    'Y': s_all[1],
-                    'Z': s_all[2]
+                    'X': s_all_dp[0],
+                    'Y': s_all_dp[1],
+                    'Z': s_all_dp[2]
                 })
             )
             sent_emb_dict[t_id]['temp_comments'].append(template_comment)
         
+        for s_all_hw in slot_all_hw:
+            template_comment = temp_text.translate(
+                str.maketrans({
+                    '{': '',
+                    '}': '',
+                    'X': s_all_hw[0],
+                    'Y': s_all_hw[1],
+                    'Z': s_all_hw[2]
+                })
+            )
+            sent_emb_dict[t_id]['temp_comments'].append(template_comment)
 
 
 for t_id in tqdm(used_temp_ids):

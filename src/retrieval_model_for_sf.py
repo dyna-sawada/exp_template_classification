@@ -101,7 +101,6 @@ elif args.model == 'all':
 
 
 
-tr_sent_emb_datas = []
 te_sent_emb_datas = []
 for lo_id, data_dict in tqdm(temp_id_gold.items()):
     if lo_id not in test_lo_ids:
@@ -143,8 +142,6 @@ for lo_id, data_dict in tqdm(temp_id_gold.items()):
 
 
 
-best_sims = []
-match_ids = []
 data_array2d = []
 for te_sent_emb_data in te_sent_emb_datas:
     lo_id_o = te_sent_emb_data['lo_id']
@@ -170,20 +167,37 @@ for te_sent_emb_data in te_sent_emb_datas:
         fixed_comment_o = te_fb_comment['fixed_comment_jp']
         temp_comment_o = te_fb_comment['template_comment_jp']
 
-        if args.model == 'pair' or args.model == 'all':
-            tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings']
+        if args.model == 'pair':
+            if motion == 'DP':
+                tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][:split_index]
+            elif motion == 'HW':
+                tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][split_index:]
             ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
             temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
         
-        if args.model == 'pair':
             slot1_ind = ind
             slot2_ind = ind
             slot3_ind = ind
 
         elif args.model == 'all':
-            slot1_en, slot2_en, slot3_en = slot_knowledges[temp_id]['slot1']['en'], slot_knowledges[temp_id]['slot2']['en'], slot_knowledges[temp_id]['slot3']['en']
+            slot1_en_o, slot2_en_o, slot3_en_o = slot_knowledges[temp_id]['slot1']['en'], slot_knowledges[temp_id]['slot2']['en'], slot_knowledges[temp_id]['slot3']['en']
+            slot1_en, slot2_en, slot3_en = slot1_en_o[:split_index], slot2_en_o[:split_index], slot3_en_o[:split_index]
             sorted_slot1_en, sorted_slot2_en, sorted_slot3_en = sorted(list(set(slot1_en))), sorted(list(set(slot2_en))), sorted(list(set(slot3_en)))
             slot_all = list(itertools.product(sorted_slot1_en, sorted_slot2_en, sorted_slot3_en))
+            
+            if motion == 'DP':
+                tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][:len(slot_all)]
+            elif motion == 'HW':
+                tr_temp_emb = sbert_embeddings_sf[temp_id]['embeddings'][len(slot_all):]
+            
+            ind, best_sim, sims = cal_cos_sim(te_target_emb, tr_temp_emb)
+            temp_comment_m_en = sbert_embeddings_sf[temp_id]['temp_comments'][ind]
+
+            if motion == 'HW':
+                slot1_en, slot2_en, slot3_en = slot1_en_o[split_index:], slot2_en_o[split_index:], slot3_en_o[split_index:]
+                sorted_slot1_en, sorted_slot2_en, sorted_slot3_en = sorted(list(set(slot1_en))), sorted(list(set(slot2_en))), sorted(list(set(slot3_en)))
+                slot_all = list(itertools.product(sorted_slot1_en, sorted_slot2_en, sorted_slot3_en))        
+
             slot1_ind = slot1_en.index(slot_all[ind][0])
             slot2_ind = slot2_en.index(slot_all[ind][1])
             slot3_ind = slot3_en.index(slot_all[ind][2])
